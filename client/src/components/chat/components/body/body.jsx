@@ -1,31 +1,68 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./styles.module.css";
 
-const Body = ({ messages, status, socket }) => {
+const Body = ({ messages, status, socket, setReplyTo }) => {
 	const navigate = useNavigate();
+	const [replyingTo, setReplyingTo] = useState(null);
 
 	const handleLeave = () => {
 		const user = localStorage.getItem("user");
-		// Проверка, если socket не передан
-		if (!socket) {
-			console.error("Socket not found!");
-			return;
+		if (socket) {
+			socket.emit("logout", { user, socketID: socket.id });
 		}
-		const socketID = socket.id;
-
-		// Эмитим событие logout, чтобы сервер удалил пользователя из списка
-		socket.emit("logout", { user, socketID });
-
-		localStorage.removeItem("user"); // Удаляем данные пользователя из localStorage
-		navigate("/"); // Перенаправляем на главную страницу
+		localStorage.removeItem("user");
+		navigate("/");
 	};
 
-	// Эффект, который срабатывает при обновлении списка сообщений
 	useEffect(() => {
-		// Скроллим страницу вниз каждый раз, когда добавляется новое сообщение
 		window.scrollTo(0, document.body.scrollHeight);
-	}, [messages]); // Зависимость от изменений в массиве сообщений
+	}, [messages]);
+
+	const handleReply = (messageId, userName) => {
+		setReplyingTo(messageId);
+		setReplyTo(messageId);
+		const messageInput = document.querySelector(".userMessage");
+		if (messageInput) {
+			messageInput.scrollIntoView({ behavior: "smooth" });
+			messageInput.focus();
+		}
+		// alert(`Вы отвечаете на сообщение пользователя ${userName}`);
+	};
+
+	const renderMessages = (messages, depth = 0) => {
+		return messages.map((element) => (
+			<div key={element.id} style={{ marginLeft: `${depth * 20}px` }}>
+				<div className={styles.chats}>
+					<p className={styles.senderName}>
+						{element.name === localStorage.getItem("user")
+							? "Вы"
+							: element.name}
+					</p>
+					<div
+						className={
+							element.name === localStorage.getItem("user")
+								? styles.messageSender
+								: styles.messageRecipient
+						}
+					>
+						<p>{element.text}</p>
+					</div>
+					<button onClick={() => handleReply(element.id, element.name)}>
+						Ответить
+					</button>
+					{replyingTo === element.id && (
+						<span className={styles.replyingIndicator}>
+							Отвечаем на это сообщение
+						</span>
+					)}
+				</div>
+				{element.replies &&
+					element.replies.length > 0 &&
+					renderMessages(element.replies, depth + 1)}
+			</div>
+		));
+	};
 
 	return (
 		<>
@@ -36,24 +73,7 @@ const Body = ({ messages, status, socket }) => {
 			</header>
 
 			<div className={styles.container}>
-				{messages.map((element) =>
-					element.name === localStorage.getItem("user") ? (
-						<div className={styles.chats} key={element.id}>
-							<p className={styles.senderName}>Вы</p>
-							<div className={styles.messageSender}>
-								<p>{element.text}</p>
-							</div>
-						</div>
-					) : (
-						<div className={styles.chats} key={element.id}>
-							<p>{element.name}</p>
-							<div className={styles.messageRecipient}>
-								<p>{element.text}</p>
-							</div>
-						</div>
-					)
-				)}
-
+				{renderMessages(messages)}
 				<div className={styles.status}>
 					<p>{status}</p>
 				</div>

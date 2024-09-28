@@ -17,51 +17,67 @@ app.get("api", (req, res) => {
 	});
 });
 
-let users = []; // Храним информацию о пользователях
+let users = [];
+let messages = [];
 
 socketIO.on("connect", (socket) => {
 	console.log(`${socket.id} user connected`);
 
 	socket.on("newUser", (data) => {
-		// Проверяем, есть ли пользователь с таким же socketID
 		const existingUser = users.find((user) => user.socketID === socket.id);
 		if (!existingUser) {
-			// Если пользователь с таким socketID не найден, добавляем его
 			users.push({ user: data.user, socketID: socket.id });
 			socketIO.emit("responseNewUser", users);
 		}
 	});
 
-	// socket.on("message", (data) => {
-	// 	socketIO.emit("response", data);
-	// });
-
-	// Обработчик события отправки сообщения
 	socket.on("message", (data) => {
-		const message = {
-			...data, // включаем существующие поля (текст, имя пользователя и т.д.)
-			parentId: data.parentId || null, // добавляем поле parentId для хранения ID родительского сообщения
+		const newMessage = {
+			id: `${socket.id}-${Date.now()}`,
+			...data,
+			parentId: data.parentId || null,
+			replies: [],
 		};
-		socketIO.emit("response", message); // отправляем сообщение всем пользователям
+
+		if (data.parentId) {
+			const parentMessage = findMessageById(messages, data.parentId);
+			if (parentMessage) {
+				parentMessage.replies.push(newMessage);
+			}
+		} else {
+			messages.push(newMessage);
+		}
+
+		socketIO.emit("response", newMessage);
 	});
 
 	socket.on("typing", (data) => socket.broadcast.emit("responseTyping", data));
 
-	// Новое событие для удаления пользователя при логауте
 	socket.on("logout", ({ user, socketID }) => {
-		// console.log(`Logout received: ${user} with socketID ${socketID}`);
-		users = users.filter((u) => u.socketID !== socketID); // Удаляем пользователя по socketID
-		socketIO.emit("responseNewUser", users); // Обновляем список пользователей
-		console.log(`${user} (${socketID}) has left the chat`); // Логируем факт выхода
+		users = users.filter((u) => u.socketID !== socketID);
+		socketIO.emit("responseNewUser", users);
+		console.log(`${user} (${socketID}) has left the chat`);
 	});
 
-	// Обновлённая обработка отключения пользователя
 	socket.on("disconnect", () => {
-		users = users.filter((u) => u.socketID !== socket.id); // Удаляем пользователя по его socketID
-		socketIO.emit("responseNewUser", users); // Обновляем список пользователей
-		console.log(`${socket.id} disconnected`); // Логируем разрыв соединения
+		users = users.filter((u) => u.socketID !== socket.id);
+		socketIO.emit("responseNewUser", users);
+		console.log(`${socket.id} disconnected`);
 	});
 });
+
+function findMessageById(messages, id) {
+	for (let message of messages) {
+		if (message.id === id) {
+			return message;
+		}
+		if (message.replies.length > 0) {
+			const found = findMessageById(message.replies, id);
+			if (found) return found;
+		}
+	}
+	return null;
+}
 
 const start = async () => {
 	try {
