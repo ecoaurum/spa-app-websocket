@@ -15,19 +15,20 @@ const Body = ({ messages, status, socket, setReplyTo }) => {
 		navigate("/");
 	};
 
-	useEffect(() => {
-		window.scrollTo(0, document.body.scrollHeight);
-	}, [messages]);
-
-	const handleReply = (messageId, userName) => {
+	const handleReply = (messageId, userName, text) => {
 		setReplyingTo(messageId);
-		setReplyTo(messageId);
+		setReplyTo({ id: messageId, text: text });
 		const messageInput = document.querySelector(".userMessage");
 		if (messageInput) {
 			messageInput.scrollIntoView({ behavior: "smooth" });
 			messageInput.focus();
 		}
-		// alert(`Вы отвечаете на сообщение пользователя ${userName}`);
+	};
+
+	// Функция для обрезки текста цитаты
+	const truncateQuote = (text, maxLength = 100) => {
+		if (text.length <= maxLength) return text;
+		return text.slice(0, maxLength - 3) + "...";
 	};
 
 	const renderMessages = (messages, depth = 0) => {
@@ -46,9 +47,17 @@ const Body = ({ messages, status, socket, setReplyTo }) => {
 								: styles.messageRecipient
 						}
 					>
+						{/* Добавляем отображение цитаты */}
+						{element.quoteText && (
+							<div className={styles.quote}>
+								<p>{truncateQuote(element.quoteText)}</p>
+							</div>
+						)}
 						<p>{element.text}</p>
 					</div>
-					<button onClick={() => handleReply(element.id, element.name)}>
+					<button
+						onClick={() => handleReply(element.id, element.name, element.text)}
+					>
 						Ответить
 					</button>
 					{replyingTo === element.id && (

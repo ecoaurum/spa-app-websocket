@@ -37,6 +37,7 @@ socketIO.on("connect", (socket) => {
 			...data,
 			parentId: data.parentId || null,
 			replies: [],
+			quoteText: data.quoteText || null,
 		};
 
 		if (data.parentId) {
