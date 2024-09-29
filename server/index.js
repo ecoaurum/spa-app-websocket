@@ -38,6 +38,7 @@ socketIO.on("connect", (socket) => {
 			parentId: data.parentId || null,
 			replies: [],
 			quoteText: data.quoteText || null,
+			timestamp: new Date().toISOString(),
 		};
 
 		if (data.parentId) {

@@ -25,6 +25,18 @@ const Body = ({ messages, status, socket, setReplyTo }) => {
 		}
 	};
 
+	// Функция для форматирования даты и времени
+	const formatDateTime = (timestamp) => {
+		const date = new Date(timestamp);
+		return date.toLocaleString("ru-RU", {
+			day: "2-digit",
+			month: "2-digit",
+			year: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+	};
+
 	// Функция для обрезки текста цитаты
 	const truncateQuote = (text, maxLength = 100) => {
 		if (text.length <= maxLength) return text;
@@ -35,11 +47,16 @@ const Body = ({ messages, status, socket, setReplyTo }) => {
 		return messages.map((element) => (
 			<div key={element.id} style={{ marginLeft: `${depth * 20}px` }}>
 				<div className={styles.chats}>
-					<p className={styles.senderName}>
-						{element.name === localStorage.getItem("user")
-							? "Вы"
-							: element.name}
-					</p>
+					<div className={styles.messageHeader}>
+						<p className={styles.senderName}>
+							{element.name === localStorage.getItem("user")
+								? "Вы"
+								: element.name}
+						</p>
+						<p className={styles.messageTime}>
+							{formatDateTime(element.timestamp)}
+						</p>
+					</div>
 					<div
 						className={
 							element.name === localStorage.getItem("user")
