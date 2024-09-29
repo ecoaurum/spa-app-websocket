@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Pagination from "../pagination/pagination";
 import styles from "./styles.module.css";
 
-const Body = ({ messages, status, socket, setReplyTo }) => {
+const Body = ({
+	messages,
+	status,
+	socket,
+	setReplyTo,
+	currentPage,
+	totalPages,
+	loadMoreMessages,
+}) => {
 	const navigate = useNavigate();
 	const [replyingTo, setReplyingTo] = useState(null);
 
@@ -104,6 +113,13 @@ const Body = ({ messages, status, socket, setReplyTo }) => {
 					<p>{status}</p>
 				</div>
 			</div>
+			{totalPages > 1 && (
+				<Pagination
+					currentPage={currentPage}
+					totalPages={totalPages}
+					onPageChange={loadMoreMessages}
+				/>
+			)}
 		</>
 	);
 };

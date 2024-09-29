@@ -1,10 +1,14 @@
 .header {
-	height: 10vh;
+	height: 60px; /* фиксированная высота */
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
 	padding: 20px;
 	border-bottom: 1px solid #bfbdbd;
+	background-color: white;
+	position: sticky; /* делаем header закрепленным */
+	top: 0; /* закрепляем его вверху */
+	z-index: 1000; /* выводим его выше всех других элементов */
 }
 
 .btn {
@@ -18,10 +22,11 @@
 }
 
 .container {
-	height: 80vh;
+	height: calc(100vh - 60px); /* высота с учетом высоты header */
 	background-color: #fff;
 	padding: 20px;
-	overflow-y: scroll;
+	padding-top: 80px; /* Добавляем дополнительный отступ сверху */
+	overflow-y: auto; /* прокрутка только внутри контейнера */
 }
 
 .container > * {

@@ -10,6 +10,7 @@ const socketIO = require("socket.io")(http, {
 
 const PORT = 5000;
 const HOST = "localhost";
+const MESSAGES_PER_PAGE = 25; // Количество сообщений на странице
 
 app.get("api", (req, res) => {
 	res.json({
@@ -47,10 +48,29 @@ socketIO.on("connect", (socket) => {
 				parentMessage.replies.push(newMessage);
 			}
 		} else {
-			messages.push(newMessage);
+			messages.unshift(newMessage);
 		}
 
-		socketIO.emit("response", newMessage);
+		// Отправляем уведомление о новом сообщении
+		socketIO.emit("newMessage", { newMessage });
+
+		// Отправляем обновленную первую страницу сообщений
+		const updatedFirstPage = getMessagesPage(1);
+		socketIO.emit("messagesPage", {
+			messages: updatedFirstPage,
+			totalPages: Math.ceil(messages.length / MESSAGES_PER_PAGE),
+			currentPage: 1,
+		});
+	});
+
+	// Новый обработчик для запроса страницы сообщений
+	socket.on("getMessages", (page) => {
+		const messagesPage = getMessagesPage(page);
+		socket.emit("messagesPage", {
+			messages: messagesPage,
+			totalPages: Math.ceil(messages.length / MESSAGES_PER_PAGE),
+			currentPage: page,
+		});
 	});
 
 	socket.on("typing", (data) => socket.broadcast.emit("responseTyping", data));
@@ -67,6 +87,13 @@ socketIO.on("connect", (socket) => {
 		console.log(`${socket.id} disconnected`);
 	});
 });
+
+// Функция для получения страницы сообщений
+function getMessagesPage(page) {
+	const start = (page - 1) * MESSAGES_PER_PAGE;
+	const end = start + MESSAGES_PER_PAGE;
+	return messages.slice(start, end);
+}
 
 function findMessageById(messages, id) {
 	for (let message of messages) {

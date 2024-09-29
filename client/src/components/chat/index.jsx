@@ -8,6 +8,8 @@ const ChatPage = ({ socket }) => {
 	const [messages, setMessages] = useState([]);
 	const [status, setStatus] = useState("");
 	const [replyTo, setReplyTo] = useState(null);
+	const [currentPage, setCurrentPage] = useState(1);
+	const [totalPages, setTotalPages] = useState(1);
 
 	useEffect(() => {
 		socket.on("response", (data) => {
@@ -22,16 +24,36 @@ const ChatPage = ({ socket }) => {
 			});
 		});
 
+		// Запрашиваем первую страницу сообщений при загрузке
+		socket.emit("getMessages", 1);
+
+		socket.on("messagesPage", (data) => {
+			setMessages(data.messages);
+			setTotalPages(data.totalPages);
+			setCurrentPage(data.currentPage);
+		});
+
+		socket.on("response", (data) => {
+			setMessages(data.messages);
+			setTotalPages(data.totalPages);
+			setCurrentPage(1); // Переходим на первую страницу при получении нового сообщения
+		});
+
 		socket.on("responseTyping", (data) => {
 			setStatus(data);
 			setTimeout(() => setStatus(""), 1000);
 		});
 
 		return () => {
+			socket.off("messagesPage");
 			socket.off("response");
 			socket.off("responseTyping");
 		};
 	}, [socket]);
+
+	const handlePageChange = (page) => {
+		socket.emit("getMessages", page);
+	};
 
 	// Функция для обновления сообщений с ответом
 	const updateMessagesWithReply = (messages, newReply) => {
@@ -58,6 +80,9 @@ const ChatPage = ({ socket }) => {
 					status={status}
 					socket={socket}
 					setReplyTo={setReplyTo}
+					currentPage={currentPage}
+					totalPages={totalPages}
+					loadMoreMessages={handlePageChange}
 				/>
 				<MessageBlock
 					socket={socket}
