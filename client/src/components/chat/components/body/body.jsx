@@ -26,7 +26,7 @@ const Body = ({
 
 	const handleReply = (messageId, userName, text) => {
 		setReplyingTo(messageId);
-		setReplyTo({ id: messageId, text: text });
+		setReplyTo({ id: messageId, text: text }); // Теперь передаем полный текст
 		const messageInput = document.querySelector(".userMessage");
 		if (messageInput) {
 			messageInput.scrollIntoView({ behavior: "smooth" });
@@ -52,6 +52,7 @@ const Body = ({
 		return text.slice(0, maxLength - 3) + "...";
 	};
 
+	// Функция, которая отвечает за отображение вложенных сообщений
 	const renderMessages = (messages, depth = 0) => {
 		return messages.map((element) => (
 			<div key={element.id} style={{ marginLeft: `${depth * 20}px` }}>
@@ -73,10 +74,11 @@ const Body = ({
 								: styles.messageRecipient
 						}
 					>
-						{/* Добавляем отображение цитаты */}
-						{element.quoteText && (
+						{/* Проверка и отображение цитируемого текста */}
+						{element.quotetext && (
 							<div className={styles.quote}>
-								<p>{truncateQuote(element.quoteText)}</p>
+								<p>{truncateQuote(element.quotetext)}</p>{" "}
+								{/* Ограничение по символам для цитаты */}
 							</div>
 						)}
 						<p>{element.text}</p>

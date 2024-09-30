@@ -1,81 +1,11 @@
-// import React, { useState, useEffect } from "react";
-// import styles from "./styles.module.css";
-
-// const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
-// 	const [message, setMessage] = useState("");
-// 	const [replyingToMessage, setReplyingToMessage] = useState(null);
-
-// 	useEffect(() => {
-// 		if (replyTo) {
-// 			// Получаем данные о сообщении, на которое отвечаем
-// 			setReplyingToMessage({
-// 				id: replyTo,
-// 				text: "Текст сообщения, на которое отвечаем",
-// 				// name: "Имя отправителя",
-// 			});
-// 		} else {
-// 			setReplyingToMessage(null);
-// 		}
-// 	}, [replyTo]);
-
-// 	const isTyping = () =>
-// 		socket.emit("typing", `${localStorage.getItem("user")} is typing`);
-
-// 	const handleSend = (e) => {
-// 		e.preventDefault();
-// 		if (message.trim() && localStorage.getItem("user")) {
-// 			socket.emit("message", {
-// 				text: message,
-// 				name: localStorage.getItem("user"),
-// 				id: `${socket.id}-${Math.random()}`,
-// 				socketID: socket.id,
-// 				parentId: replyTo,
-// 			});
-// 			setMessage("");
-// 			setReplyTo(null);
-// 		}
-// 	};
-
-// 	const cancelReply = () => {
-// 		setReplyTo(null);
-// 		setReplyingToMessage(null);
-// 	};
-
-// 	return (
-// 		<div className={styles.messageBlock}>
-// 			{replyingToMessage && (
-// 				<div className={styles.replyingTo}>
-// 					{/* <p>Ответ на сообщение от {replyingToMessage.name}:</p> */}
-// 					<p>{replyingToMessage.text}</p>
-// 					<button onClick={cancelReply}>Отменить ответ</button>
-// 				</div>
-// 			)}
-// 			<form className={styles.form} onSubmit={handleSend}>
-// 				<input
-// 					type='text'
-// 					className={styles.userMessage}
-// 					value={message}
-// 					onChange={(e) => setMessage(e.target.value)}
-// 					onKeyDown={isTyping}
-// 					placeholder={
-// 						replyingToMessage ? "Введите ваш ответ..." : "Введите сообщение..."
-// 					}
-// 				/>
-// 				<button className={styles.btn} type='submit'>
-// 					{replyingToMessage ? "Ответить" : "Отправить"}
-// 				</button>
-// 			</form>
-// 		</div>
-// 	);
-// };
-
-// export default MessageBlock;
-
 import React, { useState, useEffect } from "react";
 import styles from "./styles.module.css";
 
 const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	const [message, setMessage] = useState("");
+	const [name, setName] = useState("");
+	const [email, setEmail] = useState("");
+	const [homepage, setHomepage] = useState("");
 	const [replyingToMessage, setReplyingToMessage] = useState(null);
 
 	useEffect(() => {
@@ -86,20 +16,20 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 		}
 	}, [replyTo]);
 
-	const isTyping = () =>
-		socket.emit("typing", `${localStorage.getItem("user")} is typing`);
+	const isTyping = () => socket.emit("typing", `${name} is typing`);
 
 	const handleSend = (e) => {
 		e.preventDefault();
-		if (message.trim() && localStorage.getItem("user")) {
+		if (message.trim() && name && email) {
 			socket.emit("message", {
+				name,
+				email,
+				homepage,
 				text: message,
-				name: localStorage.getItem("user"),
 				id: `${socket.id}-${Math.random()}`,
 				socketID: socket.id,
 				parentId: replyTo ? replyTo.id : null,
-				// Добавляем текст цитируемого сообщения
-				quoteText: replyTo ? replyTo.text : null,
+				quotetext: replyTo ? replyTo.text : null,
 			});
 			setMessage("");
 			setReplyTo(null);
@@ -113,26 +43,45 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 
 	return (
 		<div className={styles.messageBlock}>
-			{replyingToMessage && (
-				<div className={styles.replyingTo}>
-					<p>Цитата: {replyingToMessage.text}</p>
-					<button onClick={cancelReply}>Отменить ответ</button>
-				</div>
-			)}
 			<form className={styles.form} onSubmit={handleSend}>
 				<input
 					type='text'
-					className={styles.userMessage}
+					value={name}
+					onChange={(e) => setName(e.target.value)}
+					placeholder='Ваше имя'
+					required
+				/>
+				<input
+					type='email'
+					value={email}
+					onChange={(e) => setEmail(e.target.value)}
+					placeholder='Ваш email'
+					required
+				/>
+				<input
+					type='url'
+					value={homepage}
+					onChange={(e) => setHomepage(e.target.value)}
+					placeholder='Ваша домашняя страница (необязательно)'
+				/>
+				<input
+					type='text'
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
 					onKeyDown={isTyping}
 					placeholder={
 						replyingToMessage ? "Введите ваш ответ..." : "Введите сообщение..."
 					}
+					required
 				/>
-				<button className={styles.btn} type='submit'>
+				<button type='submit'>
 					{replyingToMessage ? "Ответить" : "Отправить"}
 				</button>
+				{replyingToMessage && (
+					<button type='button' onClick={cancelReply}>
+						Отменить ответ
+					</button>
+				)}
 			</form>
 		</div>
 	);

@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const mysql = require("mysql2/promise"); // Подключаем mysql2 с поддержкой async/await
 const app = express();
 const http = require("http").Server(app);
 const socketIO = require("socket.io")(http, {
@@ -10,16 +11,47 @@ const socketIO = require("socket.io")(http, {
 
 const PORT = 5000;
 const HOST = "localhost";
-const MESSAGES_PER_PAGE = 25; // Количество сообщений на странице
+const MESSAGES_PER_PAGE = 25;
 
-app.get("api", (req, res) => {
+// Подключение к базе данных MySQL
+const db = mysql.createPool({
+	host: HOST,
+	user: "root",
+	password: "Kd73PkjwqPSeZQaTA",
+	database: "chat_socket",
+});
+
+// Функция для создания таблицы, если она не существует
+const createTables = async () => {
+	try {
+		await db.query(`
+            CREATE TABLE IF NOT EXISTS messages (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL,
+                homepage VARCHAR(255),
+                text TEXT NOT NULL,
+                parentid INT,
+                quotetext TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+	} catch (err) {
+		console.error("Ошибка при создании таблицы:", err);
+	}
+};
+createTables();
+
+app.use(cors());
+app.use(express.json());
+
+app.get("/api", (req, res) => {
 	res.json({
 		message: "Hello",
 	});
 });
 
 let users = [];
-let messages = [];
 
 socketIO.on("connect", (socket) => {
 	console.log(`${socket.id} user connected`);
@@ -32,43 +64,73 @@ socketIO.on("connect", (socket) => {
 		}
 	});
 
-	socket.on("message", (data) => {
-		const newMessage = {
-			id: `${socket.id}-${Date.now()}`,
-			...data,
-			parentId: data.parentId || null,
-			replies: [],
-			quoteText: data.quoteText || null,
-			timestamp: new Date().toISOString(),
-		};
-
-		if (data.parentId) {
-			const parentMessage = findMessageById(messages, data.parentId);
-			if (parentMessage) {
-				parentMessage.replies.push(newMessage);
-			}
-		} else {
-			messages.unshift(newMessage);
+	socket.on("message", async (data) => {
+		// Валидация полей
+		const { name, email, homepage, text, parentId, quotetext } = data;
+		if (!name || !email || !text) {
+			return socket.emit("error", {
+				message: "Заполните все обязательные поля",
+			});
 		}
 
-		// Отправляем уведомление о новом сообщении
-		socketIO.emit("newMessage", { newMessage });
+		// Проверка на валидность email
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		if (!emailRegex.test(email)) {
+			return socket.emit("error", { message: "Неправильный формат email" });
+		}
 
-		// Отправляем обновленную первую страницу сообщений
-		const updatedFirstPage = getMessagesPage(1);
-		socketIO.emit("messagesPage", {
-			messages: updatedFirstPage,
-			totalPages: Math.ceil(messages.length / MESSAGES_PER_PAGE),
-			currentPage: 1,
-		});
+		// Проверка на валидность URL для домашней страницы (если указана)
+		if (homepage) {
+			const urlRegex = /^(https?:\/\/[^\s$.?#].[^\s]*)$/;
+			if (!urlRegex.test(homepage)) {
+				return socket.emit("error", { message: "Неправильный формат URL" });
+			}
+		}
+
+		// Сохранение сообщения в MySQL
+		try {
+			const [result] = await db.query(
+				`INSERT INTO messages (name, email, homepage, text, parentid, quotetext) VALUES (?, ?, ?, ?, ?, ?)`,
+				[
+					name,
+					email,
+					homepage || null,
+					text,
+					parentId || null,
+					quotetext || null,
+				]
+			);
+			const newMessage = {
+				id: result.insertId,
+				name,
+				email,
+				homepage,
+				text,
+				parentId,
+				quotetext,
+				timestamp: new Date().toISOString(),
+			};
+
+			socketIO.emit("newMessage", { newMessage });
+
+			// Отправляем обновленную первую страницу сообщений
+			const updatedFirstPage = await getMessagesPage(1);
+			socketIO.emit("messagesPage", {
+				messages: updatedFirstPage,
+				totalPages: await getTotalPages(),
+				currentPage: 1,
+			});
+		} catch (err) {
+			console.error("Ошибка при сохранении сообщения:", err);
+			socket.emit("error", { message: "Ошибка при сохранении сообщения" });
+		}
 	});
 
-	// Новый обработчик для запроса страницы сообщений
-	socket.on("getMessages", (page) => {
-		const messagesPage = getMessagesPage(page);
+	socket.on("getMessages", async (page) => {
+		const messagesPage = await getMessagesPage(page);
 		socket.emit("messagesPage", {
 			messages: messagesPage,
-			totalPages: Math.ceil(messages.length / MESSAGES_PER_PAGE),
+			totalPages: await getTotalPages(),
 			currentPage: page,
 		});
 	});
@@ -88,24 +150,52 @@ socketIO.on("connect", (socket) => {
 	});
 });
 
-// Функция для получения страницы сообщений
-function getMessagesPage(page) {
-	const start = (page - 1) * MESSAGES_PER_PAGE;
-	const end = start + MESSAGES_PER_PAGE;
-	return messages.slice(start, end);
+// Функция для построения дерева сообщений из списка
+function buildMessageTree(messages) {
+	const messageMap = new Map();
+	const roots = [];
+
+	// Преобразуем список сообщений в карту по id
+	messages.forEach((msg) => {
+		msg.replies = []; // Инициализируем массив ответов
+		messageMap.set(msg.id, msg);
+
+		// Если это корневое сообщение (нет parentid), добавляем в список корневых
+		if (!msg.parentid) {
+			roots.push(msg);
+		}
+	});
+
+	// Привязываем ответы к их родительским сообщениям
+	messages.forEach((msg) => {
+		if (msg.parentid) {
+			const parent = messageMap.get(msg.parentid);
+			if (parent) {
+				parent.replies.push(msg); // Добавляем ответ в массив replies родительского сообщения
+			}
+		}
+	});
+
+	return roots; // Возвращаем корневые сообщения с вложенными ответами
 }
 
-function findMessageById(messages, id) {
-	for (let message of messages) {
-		if (message.id === id) {
-			return message;
-		}
-		if (message.replies.length > 0) {
-			const found = findMessageById(message.replies, id);
-			if (found) return found;
-		}
-	}
-	return null;
+// Функция для получения страницы сообщений из базы данных
+async function getMessagesPage(page) {
+	const offset = (page - 1) * MESSAGES_PER_PAGE;
+	const [messages] = await db.query(
+		"SELECT * FROM messages ORDER BY timestamp ASC LIMIT ? OFFSET ?",
+		[MESSAGES_PER_PAGE, offset]
+	);
+
+	// Строим дерево сообщений
+	return buildMessageTree(messages);
+}
+
+// Функция для получения общего количества страниц
+async function getTotalPages() {
+	const [rows] = await db.query("SELECT COUNT(*) AS count FROM messages");
+	const totalMessages = rows[0].count;
+	return Math.ceil(totalMessages / MESSAGES_PER_PAGE);
 }
 
 const start = async () => {
