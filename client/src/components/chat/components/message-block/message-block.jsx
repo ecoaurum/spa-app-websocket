@@ -7,6 +7,8 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	const [email, setEmail] = useState("");
 	const [homepage, setHomepage] = useState("");
 	const [replyingToMessage, setReplyingToMessage] = useState(null);
+	const [captcha, setCaptcha] = useState("");
+	const [captchaSvg, setCaptchaSvg] = useState(""); // Для хранения CAPTCHA изображения
 
 	useEffect(() => {
 		if (replyTo) {
@@ -16,22 +18,45 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 		}
 	}, [replyTo]);
 
+	// Загрузка CAPTCHA при монтировании компонента
+	useEffect(() => {
+		fetchCaptcha();
+	}, []);
+
+	// Функция для получения нового изображения CAPTCHA
+	const fetchCaptcha = async () => {
+		try {
+			const response = await fetch("http://localhost:5000/captcha");
+			if (response.ok) {
+				const captchaSvgText = await response.text();
+				setCaptchaSvg(captchaSvgText);
+			} else {
+				console.error("Ошибка при получении CAPTCHA");
+			}
+		} catch (error) {
+			console.error("Ошибка запроса CAPTCHA:", error);
+		}
+	};
+
 	const isTyping = () => socket.emit("typing", `${name} is typing`);
 
 	const handleSend = (e) => {
 		e.preventDefault();
-		if (message.trim() && name && email) {
+		if (message.trim() && name && email && captcha) {
 			socket.emit("message", {
 				name,
 				email,
 				homepage,
 				text: message,
+				captcha, // Передаем CAPTCHA вместе с сообщением
 				id: `${socket.id}-${Math.random()}`,
 				socketID: socket.id,
 				parentId: replyTo ? replyTo.id : null,
 				quotetext: replyTo ? replyTo.text : null,
 			});
 			setMessage("");
+			setCaptcha(""); // Очищаем CAPTCHA поле
+			fetchCaptcha(); // Загружаем новую CAPTCHA
 			setReplyTo(null);
 		}
 	};
@@ -73,6 +98,16 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					placeholder={
 						replyingToMessage ? "Введите ваш ответ..." : "Введите сообщение..."
 					}
+					required
+				/>
+				{/* CAPTCHA изображение */}
+				<div dangerouslySetInnerHTML={{ __html: captchaSvg }} />
+				{/* Поле для ввода CAPTCHA */}
+				<input
+					type='text'
+					value={captcha}
+					onChange={(e) => setCaptcha(e.target.value)}
+					placeholder='Введите CAPTCHA'
 					required
 				/>
 				<button type='submit'>

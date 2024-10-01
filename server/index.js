@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise"); // Подключаем mysql2 с поддержкой async/await
+const svgCaptcha = require("svg-captcha");
 const app = express();
 const http = require("http").Server(app);
 const socketIO = require("socket.io")(http, {
@@ -12,6 +13,10 @@ const socketIO = require("socket.io")(http, {
 const PORT = 5000;
 const HOST = "localhost";
 const MESSAGES_PER_PAGE = 25;
+let captchas = {};
+
+// Разрешаем CORS для всех маршрутов
+app.use(cors({ origin: "http://localhost:5173" }));
 
 // Подключение к базе данных MySQL
 const db = mysql.createPool({
@@ -20,6 +25,22 @@ const db = mysql.createPool({
 	password: "Kd73PkjwqPSeZQaTA",
 	database: "chat_socket",
 });
+
+// Генерация CAPTCHA
+app.get("/captcha", (req, res) => {
+	const captcha = svgCaptcha.create();
+	const ip = req.ip;
+	captchas[ip] = captcha.text;
+	res.type("svg");
+	res.status(200).send(captcha.data);
+});
+
+// Проверка CAPTCHA
+function validateCaptcha(ip, inputCaptcha) {
+	return (
+		captchas[ip] && captchas[ip].toLowerCase() === inputCaptcha.toLowerCase()
+	);
+}
 
 // Функция для создания таблицы, если она не существует
 const createTables = async () => {
@@ -71,6 +92,11 @@ socketIO.on("connect", (socket) => {
 			return socket.emit("error", {
 				message: "Заполните все обязательные поля",
 			});
+		}
+
+		// Валидация CAPTCHA
+		if (!validateCaptcha(socket.handshake.address, data.captcha)) {
+			return socket.emit("error", { message: "Неверная CAPTCHA" });
 		}
 
 		// Проверка на валидность email
