@@ -73,7 +73,7 @@ const ChatPage = ({ socket }) => {
 
 	return (
 		<div className={styles.chat}>
-			<SideBar socket={socket} />
+			{/* <SideBar socket={socket} /> */}
 			<main className={styles.main}>
 				<Body
 					messages={messages}

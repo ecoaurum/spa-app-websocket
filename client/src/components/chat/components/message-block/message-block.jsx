@@ -64,7 +64,8 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					onChange={(e) => setHomepage(e.target.value)}
 					placeholder='Ваша домашняя страница (необязательно)'
 				/>
-				<input
+				<textarea
+					className={`${styles.input} ${styles.messageTextarea}`}
 					type='text'
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
