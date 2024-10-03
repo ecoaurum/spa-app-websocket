@@ -35,6 +35,32 @@ app.get("/captcha", (req, res) => {
 	res.status(200).send(captcha.data);
 });
 
+// Добавляем новый маршрут для получения основных комментариев с сортировкой
+app.get("/api/main-comments", async (req, res) => {
+	try {
+		const { sort, order } = req.query;
+		let orderBy = "timestamp";
+		if (sort === "username") orderBy = "name";
+		else if (sort === "email") orderBy = "email";
+		else if (sort === "date") orderBy = "timestamp";
+
+		const orderDirection = order === "asc" ? "ASC" : "DESC";
+
+		// Получаем все сообщения, а не только главные комментарии
+		const [allMessages] = await db.query(
+			`SELECT * FROM messages ORDER BY ${orderBy} ${orderDirection}`
+		);
+
+		// Строим дерево сообщений
+		const messageTree = buildMessageTree(allMessages);
+
+		res.json(messageTree);
+	} catch (error) {
+		console.error("Ошибка при получении комментариев:", error);
+		res.status(500).json({ error: "Внутренняя ошибка сервера" });
+	}
+});
+
 // Проверка CAPTCHA
 function validateCaptcha(ip, inputCaptcha) {
 	return (
@@ -181,24 +207,24 @@ function buildMessageTree(messages) {
 	const messageMap = new Map();
 	const roots = [];
 
-	// Преобразуем список сообщений в карту по id
+	// Первый проход: создаем map всех сообщений
 	messages.forEach((msg) => {
-		msg.replies = []; // Инициализируем массив ответов
+		msg.replies = [];
 		messageMap.set(msg.id, msg);
-
-		// Если это корневое сообщение (нет parentid), добавляем в список корневых
-		if (!msg.parentid) {
-			roots.push(msg);
-		}
 	});
 
-	// Привязываем ответы к их родительским сообщениям
+	// Второй проход: строим дерево
 	messages.forEach((msg) => {
 		if (msg.parentid) {
 			const parent = messageMap.get(msg.parentid);
 			if (parent) {
-				parent.replies.push(msg); // Добавляем ответ в массив replies родительского сообщения
+				parent.replies.push(msg);
+			} else {
+				// Если родитель не найден, добавляем как корневое сообщение
+				roots.push(msg);
 			}
+		} else {
+			roots.push(msg);
 		}
 	});
 
