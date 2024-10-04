@@ -317,30 +317,7 @@ const Body = ({
 	);
 
 	const renderMainComments = () => (
-		<table className={styles.commentsTable}>
-			{renderTableHeader()}
-			{/* <tbody>
-				{messages
-					.filter((msg) => !msg.parentid)
-					.map((element) => (
-						<tr key={element.id}>
-							<td>{element.name}</td>
-							<td>{element.email}</td>
-							<td>{formatDateTime(element.timestamp)}</td>
-							<td>{truncateQuote(element.text)}</td>
-							<td>
-								<button
-									onClick={() =>
-										handleReply(element.id, element.name, element.text)
-									}
-								>
-									Reply
-								</button>
-							</td>
-						</tr>
-					))}
-			</tbody> */}
-		</table>
+		<table className={styles.commentsTable}>{renderTableHeader()}</table>
 	);
 
 	const renderMessages = (messages, depth = 0) => {
