@@ -44,17 +44,27 @@ const storage = multer.diskStorage({
 
 const upload = multer({
 	storage: storage,
-	limits: { fileSize: 5 * 1024 * 1024 }, // Ограничение на 5MB
+	limits: { fileSize: 100 * 1024 }, // Ограничение на 100 КБ для текстовых файлов
 	fileFilter: function (req, file, cb) {
-		const filetypes = /jpeg|jpg|png|gif/;
-		const mimetype = filetypes.test(file.mimetype);
+		// Проверка допустимых типов файлов
+		const filetypes = /jpeg|jpg|png|gif|txt/;
 		const extname = filetypes.test(
 			path.extname(file.originalname).toLowerCase()
 		);
-		if (mimetype && extname) {
-			return cb(null, true);
+		const mimetype = file.mimetype;
+
+		if (extname && mimetype) {
+			if (mimetype === "text/plain" || /image\/(jpeg|png|gif)/.test(mimetype)) {
+				return cb(null, true);
+			} else {
+				return cb(
+					new Error(
+						"Only images (JPG, PNG, GIF) or text files (TXT) are allowed"
+					)
+				);
+			}
 		}
-		cb(new Error("Only images are allowed (JPG, PNG, GIF)"));
+		cb(new Error("Invalid file type. Only images and text files are allowed."));
 	},
 });
 
@@ -87,6 +97,32 @@ app.post("/upload-image", upload.single("image"), async (req, res) => {
 	} catch (error) {
 		console.error("Ошибка при обработке изображения:", error);
 		res.status(500).json({ message: "Ошибка обработки изображения" });
+	}
+});
+
+// Маршрут для загрузки текстового файла
+app.post("/upload-file", upload.single("file"), async (req, res) => {
+	if (!req.file) {
+		return res.status(400).send({ message: "No file uploaded" });
+	}
+
+	const filePath = req.file.path;
+	const fileSize = req.file.size;
+
+	try {
+		// Если текстовый файл превышает 100 КБ, удаляем его
+		if (
+			path.extname(filePath).toLowerCase() === ".txt" &&
+			fileSize > 100 * 1024
+		) {
+			await fs.promises.unlink(filePath);
+			return res.status(400).json({ message: "Text file exceeds 100KB" });
+		}
+
+		res.status(200).json({ fileUrl: `/uploads/${req.file.filename}` });
+	} catch (error) {
+		console.error("Ошибка при загрузке файла:", error);
+		res.status(500).json({ message: "Ошибка загрузки файла" });
 	}
 });
 

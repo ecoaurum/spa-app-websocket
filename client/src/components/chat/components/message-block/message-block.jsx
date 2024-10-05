@@ -10,6 +10,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	const [captcha, setCaptcha] = useState("");
 	const [captchaSvg, setCaptchaSvg] = useState(""); // Для хранения CAPTCHA изображения
 	const [image, setImage] = useState(null); // Для хранения файла изображения
+	const [textFile, setTextFile] = useState(null); // Для хранения текстового файла
 
 	useEffect(() => {
 		if (replyTo) {
@@ -45,12 +46,18 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 		setImage(e.target.files[0]);
 	};
 
+	const handleFileChange = (e) => {
+		setTextFile(e.target.files[0]);
+	};
+
 	const handleSend = async (e) => {
 		e.preventDefault();
 		try {
 			if (message.trim() && name && email && captcha) {
 				let imageUrl = null;
+				let textFileUrl = null;
 
+				// Загружаем изображение, если выбрано
 				if (image) {
 					const formData = new FormData();
 					formData.append("image", image);
@@ -67,6 +74,23 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					imageUrl = result.imageUrl;
 				}
 
+				// Загружаем текстовый файл, если выбран
+				if (textFile) {
+					const formData = new FormData();
+					formData.append("file", textFile);
+					const response = await fetch("http://localhost:5000/upload-file", {
+						method: "POST",
+						body: formData,
+					});
+
+					if (!response.ok) {
+						throw new Error("Ошибка загрузки текстового файла");
+					}
+
+					const result = await response.json();
+					textFileUrl = result.fileUrl;
+				}
+
 				socket.emit("message", {
 					name,
 					email,
@@ -74,6 +98,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					text: message,
 					captcha,
 					imageUrl,
+					textFileUrl, // Отправляем URL текстового файла
 					parentId: replyTo ? replyTo.id : null,
 					quotetext: replyTo ? replyTo.text : null,
 				});
@@ -83,6 +108,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 				fetchCaptcha();
 				setReplyTo(null);
 				setImage(null);
+				setTextFile(null); // Очищаем текстовый файл после отправки
 			}
 		} catch (error) {
 			console.error("Ошибка при отправке сообщения:", error);
@@ -129,7 +155,12 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					required
 				/>
 				{/* Поле для загрузки изображения */}
+				<label htmlFor='image-upload'>Загрузить картинку:</label>
 				<input type='file' onChange={handleImageChange} accept='image/*' />
+
+				{/* Поле для загрузки текстового файла */}
+				<label htmlFor='text-file-upload'>Загрузить текстовый файл:</label>
+				<input type='file' onChange={handleFileChange} accept='.txt' />
 				{/* CAPTCHA изображение */}
 				<div dangerouslySetInnerHTML={{ __html: captchaSvg }} />
 				{/* Поле для ввода CAPTCHA */}
