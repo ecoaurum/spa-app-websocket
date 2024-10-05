@@ -2,6 +2,10 @@ const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise"); // Подключаем mysql2 с поддержкой async/await
 const svgCaptcha = require("svg-captcha");
+const multer = require("multer"); // Для загрузки файлов
+const sharp = require("sharp"); // Для изменения размера изображений
+const path = require("path");
+const fs = require("fs");
 const app = express();
 const http = require("http").Server(app);
 const socketIO = require("socket.io")(http, {
@@ -16,7 +20,75 @@ const MESSAGES_PER_PAGE = 25;
 let captchas = {};
 
 // Разрешаем CORS для всех маршрутов
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(
+	cors({
+		origin: "http://localhost:5173", // Убедитесь, что здесь правильный origin
+		methods: "GET,POST",
+		credentials: true, // Это может понадобиться для передачи данных о сессиях
+	})
+);
+
+// Конфигурация multer для загрузки файлов
+const storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		const dir = "./uploads";
+		if (!fs.existsSync(dir)) {
+			fs.mkdirSync(dir);
+		}
+		cb(null, "uploads/"); // Директория для загрузки
+	},
+	filename: function (req, file, cb) {
+		cb(null, Date.now() + path.extname(file.originalname)); // Уникальное имя файла
+	},
+});
+
+const upload = multer({
+	storage: storage,
+	limits: { fileSize: 5 * 1024 * 1024 }, // Ограничение на 5MB
+	fileFilter: function (req, file, cb) {
+		const filetypes = /jpeg|jpg|png|gif/;
+		const mimetype = filetypes.test(file.mimetype);
+		const extname = filetypes.test(
+			path.extname(file.originalname).toLowerCase()
+		);
+		if (mimetype && extname) {
+			return cb(null, true);
+		}
+		cb(new Error("Only images are allowed (JPG, PNG, GIF)"));
+	},
+});
+
+// Обработка изображений: загрузка и ресайз
+app.post("/upload-image", upload.single("image"), async (req, res) => {
+	if (!req.file) {
+		return res.status(400).send({ message: "No file uploaded" });
+	}
+	const filePath = req.file.path;
+	const resizedFilePath = `uploads/resized_${req.file.filename}`;
+
+	try {
+		// Изменение размера изображения
+		await sharp(filePath)
+			.resize(320, 240, { fit: sharp.fit.inside, withoutEnlargement: true })
+			.toFile(resizedFilePath);
+
+		// Добавляем задержку перед удалением файла
+		setTimeout(async () => {
+			try {
+				if (await fs.promises.access(filePath)) {
+					await fs.promises.unlink(filePath);
+				}
+			} catch (err) {
+				console.error("Ошибка при удалении файла:", err);
+			}
+		}, 1000);
+
+		res.status(200).json({ imageUrl: `/uploads/resized_${req.file.filename}` });
+	} catch (error) {
+		console.error("Ошибка при обработке изображения:", error);
+		res.status(500).json({ message: "Ошибка обработки изображения" });
+	}
+});
 
 // Подключение к базе данных MySQL
 const db = mysql.createPool({
@@ -91,6 +163,7 @@ createTables();
 
 app.use(cors());
 app.use(express.json());
+app.use("/uploads", express.static("uploads"));
 
 app.get("/api", (req, res) => {
 	res.json({

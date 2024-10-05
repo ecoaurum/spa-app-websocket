@@ -9,6 +9,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	const [replyingToMessage, setReplyingToMessage] = useState(null);
 	const [captcha, setCaptcha] = useState("");
 	const [captchaSvg, setCaptchaSvg] = useState(""); // Для хранения CAPTCHA изображения
+	const [image, setImage] = useState(null); // Для хранения файла изображения
 
 	useEffect(() => {
 		if (replyTo) {
@@ -40,24 +41,51 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 
 	const isTyping = () => socket.emit("typing", `${name} is typing`);
 
-	const handleSend = (e) => {
+	const handleImageChange = (e) => {
+		setImage(e.target.files[0]);
+	};
+
+	const handleSend = async (e) => {
 		e.preventDefault();
-		if (message.trim() && name && email && captcha) {
-			socket.emit("message", {
-				name,
-				email,
-				homepage,
-				text: message,
-				captcha, // Передаем CAPTCHA вместе с сообщением
-				id: `${socket.id}-${Math.random()}`,
-				socketID: socket.id,
-				parentId: replyTo ? replyTo.id : null,
-				quotetext: replyTo ? replyTo.text : null,
-			});
-			setMessage("");
-			setCaptcha(""); // Очищаем CAPTCHA поле
-			fetchCaptcha(); // Загружаем новую CAPTCHA
-			setReplyTo(null);
+		try {
+			if (message.trim() && name && email && captcha) {
+				let imageUrl = null;
+
+				if (image) {
+					const formData = new FormData();
+					formData.append("image", image);
+					const response = await fetch("http://localhost:5000/upload-image", {
+						method: "POST",
+						body: formData,
+					});
+
+					if (!response.ok) {
+						throw new Error("Ошибка загрузки изображения");
+					}
+
+					const result = await response.json();
+					imageUrl = result.imageUrl;
+				}
+
+				socket.emit("message", {
+					name,
+					email,
+					homepage,
+					text: message,
+					captcha,
+					imageUrl,
+					parentId: replyTo ? replyTo.id : null,
+					quotetext: replyTo ? replyTo.text : null,
+				});
+
+				setMessage("");
+				setCaptcha("");
+				fetchCaptcha();
+				setReplyTo(null);
+				setImage(null);
+			}
+		} catch (error) {
+			console.error("Ошибка при отправке сообщения:", error);
 		}
 	};
 
@@ -100,6 +128,8 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					}
 					required
 				/>
+				{/* Поле для загрузки изображения */}
+				<input type='file' onChange={handleImageChange} accept='image/*' />
 				{/* CAPTCHA изображение */}
 				<div dangerouslySetInnerHTML={{ __html: captchaSvg }} />
 				{/* Поле для ввода CAPTCHA */}
