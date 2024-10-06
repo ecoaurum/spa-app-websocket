@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styles from "./styles.module.css";
 
 const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
@@ -13,6 +13,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	const [textFile, setTextFile] = useState(null); // Для хранения текстового файла
 	const [errors, setErrors] = useState({}); // Для хранения ошибок валидации
 	const [showPreview, setShowPreview] = useState(false); // Новое состояние для предпросмотра
+	const textareaRef = useRef(null);
 
 	useEffect(() => {
 		if (replyTo) {
@@ -209,6 +210,38 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 		</div>
 	);
 
+	// функция для вставки HTML-тегов:
+	const insertTag = (tag) => {
+		const textarea = textareaRef.current;
+		const start = textarea.selectionStart;
+		const end = textarea.selectionEnd;
+		const text = textarea.value;
+		const before = text.substring(0, start);
+		const after = text.substring(end);
+		let insertion = "";
+
+		switch (tag) {
+			case "i":
+			case "strong":
+			case "code":
+				insertion = `<${tag}>${text.substring(start, end)}</${tag}>`;
+				break;
+			case "a":
+				const url = prompt("Введите URL для ссылки:", "http://");
+				if (url) {
+					insertion = `<a href="${url}">${text.substring(start, end)}</a>`;
+				}
+				break;
+		}
+
+		setMessage(before + insertion + after);
+		textarea.focus();
+		textarea.setSelectionRange(
+			start + insertion.length,
+			start + insertion.length
+		);
+	};
+
 	return (
 		<div className={styles.messageBlock}>
 			{showPreview ? (
@@ -243,8 +276,24 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 						<span className={styles.error}>{errors.homepage}</span>
 					)}
 
+					<div className={styles.htmlToolbar}>
+						<button type='button' onClick={() => insertTag("i")}>
+							[i]
+						</button>
+						<button type='button' onClick={() => insertTag("strong")}>
+							[strong]
+						</button>
+						<button type='button' onClick={() => insertTag("code")}>
+							[code]
+						</button>
+						<button type='button' onClick={() => insertTag("a")}>
+							[a]
+						</button>
+					</div>
+
 					<textarea
 						className={`${styles.input} ${styles.messageTextarea}`}
+						ref={textareaRef}
 						type='text'
 						value={message}
 						onChange={(e) => setMessage(e.target.value)}
