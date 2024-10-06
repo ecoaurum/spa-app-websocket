@@ -126,16 +126,25 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 		setReplyingToMessage(null);
 	};
 
+	// функция для обработки ввода в поле имени
+	const handleNameChange = (e) => {
+		const inputValue = e.target.value;
+		const latinOnly = inputValue.replace(/[^a-zA-Z]/g, "");
+		setName(latinOnly);
+	};
+
 	// Валидация полей
 	const validateInputs = () => {
 		const newErrors = {};
+		const latinRegex = /^[a-zA-Z]+$/;
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		// const urlRegex = /^(https?:\/\/[^\s$.?#].[^\s]*)$/;
 		const urlRegex =
 			/^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+([/?].*)?$/;
 
 		if (!name.trim()) {
 			newErrors.name = "Имя не должно быть пустым";
+		} else if (!latinRegex.test(name)) {
+			newErrors.name = "Имя должно содержать только латинские буквы";
 		}
 		if (!email.trim() || !emailRegex.test(email)) {
 			newErrors.email = "Некорректный email";
@@ -251,8 +260,8 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					<input
 						type='text'
 						value={name}
-						onChange={(e) => setName(e.target.value)}
-						placeholder='Ваше имя'
+						onChange={handleNameChange}
+						placeholder='Ваше имя (только латинские буквы)'
 						required
 					/>
 					{errors.name && <span className={styles.error}>{errors.name}</span>}
