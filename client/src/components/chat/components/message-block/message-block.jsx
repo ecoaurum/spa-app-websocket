@@ -12,6 +12,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	const [image, setImage] = useState(null); // Для хранения файла изображения
 	const [textFile, setTextFile] = useState(null); // Для хранения текстового файла
 	const [errors, setErrors] = useState({}); // Для хранения ошибок валидации
+	const [showPreview, setShowPreview] = useState(false); // Новое состояние для предпросмотра
 
 	useEffect(() => {
 		if (replyTo) {
@@ -105,12 +106,14 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 
 				setName("");
 				setEmail("");
+				setHomepage("");
 				setMessage("");
 				setCaptcha("");
 				fetchCaptcha();
 				setReplyTo(null);
 				setImage(null);
 				setTextFile(null); // Очищаем текстовый файл после отправки
+				setShowPreview(false);
 			}
 		} catch (error) {
 			console.error("Ошибка при отправке сообщения:", error);
@@ -147,84 +150,144 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 		return Object.keys(newErrors).length === 0; // Если ошибок нет, возвращаем true
 	};
 
+	// Новая функция для обработки предпросмотра
+	const handlePreview = () => {
+		if (validateInputs()) {
+			setShowPreview(true);
+		}
+	};
+
+	// Компонент предпросмотра
+	const Preview = () => (
+		<div className={styles.preview}>
+			<h3>Предпросмотр сообщения</h3>
+			<p>
+				<strong>Имя:</strong> {name}
+			</p>
+			<p>
+				<strong>Email:</strong> {email}
+			</p>
+			{homepage && (
+				<p>
+					<strong>Домашняя страница:</strong>{" "}
+					<a href={homepage} target='_blank' rel='noopener noreferrer'>
+						{homepage}
+					</a>
+				</p>
+			)}
+			<p>
+				<strong>Сообщение:</strong> {message}
+			</p>
+			{image && (
+				<p>
+					<strong>Изображение:</strong> {image.name}
+				</p>
+			)}
+			{textFile && (
+				<p>
+					<strong>Текстовый файл:</strong> {textFile.name}
+				</p>
+			)}
+			{replyingToMessage && (
+				<p>
+					<strong>Ответ на:</strong> {replyingToMessage.text}
+				</p>
+			)}
+			<button onClick={() => setShowPreview(false)}>
+				Закрыть предпросмотр
+			</button>
+		</div>
+	);
+
 	return (
 		<div className={styles.messageBlock}>
-			<form className={styles.form} onSubmit={handleSend}>
-				<input
-					type='text'
-					value={name}
-					onChange={(e) => setName(e.target.value)}
-					placeholder='Ваше имя'
-					required
-				/>
-				{errors.name && <span className={styles.error}>{errors.name}</span>}
+			{showPreview ? (
+				<Preview />
+			) : (
+				<form className={styles.form} onSubmit={handleSend}>
+					<input
+						type='text'
+						value={name}
+						onChange={(e) => setName(e.target.value)}
+						placeholder='Ваше имя'
+						required
+					/>
+					{errors.name && <span className={styles.error}>{errors.name}</span>}
 
-				<input
-					type='email'
-					value={email}
-					onChange={(e) => setEmail(e.target.value)}
-					placeholder='Ваш email'
-					required
-				/>
-				{errors.email && <span className={styles.error}>{errors.email}</span>}
+					<input
+						type='email'
+						value={email}
+						onChange={(e) => setEmail(e.target.value)}
+						placeholder='Ваш email'
+						required
+					/>
+					{errors.email && <span className={styles.error}>{errors.email}</span>}
 
-				<input
-					type='url'
-					value={homepage}
-					onChange={(e) => setHomepage(e.target.value)}
-					placeholder='Ваша домашняя страница (необязательно)'
-				/>
-				{errors.homepage && (
-					<span className={styles.error}>{errors.homepage}</span>
-				)}
+					<input
+						type='url'
+						value={homepage}
+						onChange={(e) => setHomepage(e.target.value)}
+						placeholder='Ваша домашняя страница (необязательно)'
+					/>
+					{errors.homepage && (
+						<span className={styles.error}>{errors.homepage}</span>
+					)}
 
-				<textarea
-					className={`${styles.input} ${styles.messageTextarea}`}
-					type='text'
-					value={message}
-					onChange={(e) => setMessage(e.target.value)}
-					placeholder={
-						replyingToMessage ? "Введите ваш ответ..." : "Введите сообщение..."
-					}
-					required
-				/>
-				{errors.message && (
-					<span className={styles.error}>{errors.message}</span>
-				)}
+					<textarea
+						className={`${styles.input} ${styles.messageTextarea}`}
+						type='text'
+						value={message}
+						onChange={(e) => setMessage(e.target.value)}
+						placeholder={
+							replyingToMessage
+								? "Введите ваш ответ..."
+								: "Введите сообщение..."
+						}
+						required
+					/>
+					{errors.message && (
+						<span className={styles.error}>{errors.message}</span>
+					)}
 
-				{/* Поле для загрузки изображения */}
-				<label htmlFor='image-upload'>Загрузить картинку:</label>
-				<input type='file' onChange={handleImageChange} accept='image/*' />
+					{/* Поле для загрузки изображения */}
+					<label htmlFor='image-upload'>Загрузить картинку:</label>
+					<input type='file' onChange={handleImageChange} accept='image/*' />
 
-				{/* Поле для загрузки текстового файла */}
-				<label htmlFor='text-file-upload'>Загрузить текстовый файл:</label>
-				<input type='file' onChange={handleFileChange} accept='.txt' />
+					{/* Поле для загрузки текстового файла */}
+					<label htmlFor='text-file-upload'>Загрузить текстовый файл:</label>
+					<input type='file' onChange={handleFileChange} accept='.txt' />
 
-				{/* CAPTCHA изображение */}
-				<div dangerouslySetInnerHTML={{ __html: captchaSvg }} />
-				{/* Кнопка для обновления CAPTCHA */}
-				<button type='button' onClick={fetchCaptcha}>
-					Обновить CAPTCHA
-				</button>
-
-				{/* Поле для ввода CAPTCHA */}
-				<input
-					type='text'
-					value={captcha}
-					onChange={(e) => setCaptcha(e.target.value)}
-					placeholder='Введите CAPTCHA'
-					required
-				/>
-
-				<button type='submit'>
-					{replyingToMessage ? "Ответить" : "Отправить"}
-				</button>
-				{replyingToMessage && (
-					<button type='button' onClick={cancelReply}>
-						Отменить ответ
+					{/* CAPTCHA изображение */}
+					<div dangerouslySetInnerHTML={{ __html: captchaSvg }} />
+					{/* Кнопка для обновления CAPTCHA */}
+					<button type='button' onClick={fetchCaptcha}>
+						Обновить CAPTCHA
 					</button>
-				)}
-			</form>
+
+					{/* Поле для ввода CAPTCHA */}
+					<input
+						type='text'
+						value={captcha}
+						onChange={(e) => setCaptcha(e.target.value)}
+						placeholder='Введите CAPTCHA'
+						required
+					/>
+
+					<button type='submit'>
+						{replyingToMessage ? "Ответить" : "Отправить"}
+					</button>
+					{replyingToMessage && (
+						<button type='button' onClick={cancelReply}>
+							Отменить ответ
+						</button>
+					)}
+
+					{/* Новая кнопка для предпросмотра */}
+					<button type='button' onClick={handlePreview}>
+						Предпросмотр сообщения
+					</button>
+				</form>
+			)}
 		</div>
 	);
 };
