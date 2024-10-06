@@ -108,51 +108,73 @@ const Body = ({
 		<table className={styles.commentsTable}>{renderTableHeader()}</table>
 	);
 
+	const generateColor = (username) => {
+		let hash = 0;
+		for (let i = 0; i < username.length; i++) {
+			hash = username.charCodeAt(i) + ((hash << 5) - hash);
+		}
+
+		// Генерируем более светлые оттенки
+		const r = (hash & 0xff) + 127;
+		const g = ((hash >> 8) & 0xff) + 127;
+		const b = ((hash >> 16) & 0xff) + 127;
+
+		// Преобразуем в шестнадцатеричный формат и обеспечиваем, чтобы значения не превышали FF
+		const toHex = (value) => Math.min(255, value).toString(16).padStart(2, "0");
+
+		return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+	};
+
 	const renderMessages = (messages, depth = 0) => {
-		return messages.map((element) => (
-			<div key={element.id} style={{ marginLeft: `${depth * 20}px` }}>
-				<div className={styles.chats}>
-					<div className={styles.messageHeader}>
-						<p className={styles.senderName}>
-							{element.name === localStorage.getItem("user")
-								? "Вы"
-								: element.name}
-						</p>
-						<p className={styles.messageTime}>
-							{formatDateTime(element.timestamp)}
-						</p>
-					</div>
-					<div
-						className={
-							element.name === localStorage.getItem("user")
-								? styles.messageSender
-								: styles.messageRecipient
-						}
-					>
-						{element.quotetext && (
-							<div className={styles.quote}>
-								<p>{truncateQuote(element.quotetext)}</p>
-							</div>
+		return messages.map((element) => {
+			const backgroundColor = generateColor(element.name);
+			return (
+				<div key={element.id} style={{ marginLeft: `${depth * 20}px` }}>
+					<div className={styles.chats}>
+						<div className={styles.messageHeader}>
+							<p className={styles.senderName}>
+								{element.name === localStorage.getItem("user")
+									? "Вы"
+									: element.name}
+							</p>
+							<p className={styles.messageTime}>
+								{formatDateTime(element.timestamp)}
+							</p>
+						</div>
+						<div
+							className={
+								element.name === localStorage.getItem("user")
+									? styles.messageSender
+									: styles.messageRecipient
+							}
+							style={{ backgroundColor }}
+						>
+							{element.quotetext && (
+								<div className={styles.quote}>
+									<p>{truncateQuote(element.quotetext)}</p>
+								</div>
+							)}
+							<div dangerouslySetInnerHTML={{ __html: element.text }} />
+						</div>
+						<button
+							onClick={() =>
+								handleReply(element.id, element.name, element.text)
+							}
+						>
+							Ответить
+						</button>
+						{replyingTo === element.id && (
+							<span className={styles.replyingIndicator}>
+								Отвечаем на это сообщение
+							</span>
 						)}
-						{/* Используем dangerouslySetInnerHTML для рендеринга HTML-тегов */}
-						<div dangerouslySetInnerHTML={{ __html: element.text }} />
 					</div>
-					<button
-						onClick={() => handleReply(element.id, element.name, element.text)}
-					>
-						Ответить
-					</button>
-					{replyingTo === element.id && (
-						<span className={styles.replyingIndicator}>
-							Отвечаем на это сообщение
-						</span>
-					)}
+					{element.replies &&
+						element.replies.length > 0 &&
+						renderMessages(element.replies, depth + 1)}
 				</div>
-				{element.replies &&
-					element.replies.length > 0 &&
-					renderMessages(element.replies, depth + 1)}
-			</div>
-		));
+			);
+		});
 	};
 
 	return (
