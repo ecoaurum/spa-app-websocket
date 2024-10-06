@@ -83,6 +83,11 @@ const ChatPage = ({ socket }) => {
 	return (
 		<div className={styles.chat}>
 			<main className={styles.main}>
+				<MessageBlock
+					socket={socket}
+					replyTo={replyTo}
+					setReplyTo={setReplyTo}
+				/>
 				<Body
 					messages={messages}
 					status={status}
@@ -92,11 +97,6 @@ const ChatPage = ({ socket }) => {
 					totalPages={totalPages}
 					loadMoreMessages={handlePageChange}
 					fetchSortedComments={fetchSortedComments}
-				/>
-				<MessageBlock
-					socket={socket}
-					replyTo={replyTo}
-					setReplyTo={setReplyTo}
 				/>
 			</main>
 		</div>

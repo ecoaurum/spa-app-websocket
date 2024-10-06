@@ -1,3 +1,17 @@
+.header {
+	height: 60px; /* фиксированная высота */
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	padding: 20px;
+	padding-bottom: 40px;
+	border-bottom: 1px solid #bfbdbd;
+	background-color: white;
+	position: sticky; /* делаем header закрепленным */
+	top: 0; /* закрепляем его вверху */
+	z-index: 1000; /* выводим его выше всех других элементов */
+}
+
 .messageBlock {
 	padding: 20px;
 	height: auto; /* Исправлено для динамического размера */
@@ -32,7 +46,7 @@
 
 .btn {
 	width: 150px;
-	background-color: green;
+	background-color: #d1512d;
 	padding: 10px;
 	border: none;
 	outline: none;

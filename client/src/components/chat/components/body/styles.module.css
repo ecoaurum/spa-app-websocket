@@ -12,7 +12,7 @@
 }
 
 .tableHeader {
-	height: 120px;
+	height: 50px;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -45,12 +45,12 @@
 
 .container {
 	/* Устанавливаем высоту с учетом header и блока ввода сообщения */
-	height: calc(
+	/* height: calc(
 		100vh - 60px - 150px
-	); /* Высота окна минус высота header и высота блока ввода сообщения */
+	); Высота окна минус высота header и высота блока ввода сообщения */
 	background-color: #fff;
 	padding: 20px;
-	padding-top: 80px; /* Добавляем дополнительный отступ сверху */
+	/* padding-top: 80px; Добавляем дополнительный отступ сверху */
 	overflow-y: auto; /* прокрутка только внутри контейнера */
 }
 

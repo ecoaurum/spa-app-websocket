@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "./styles.module.css";
 
 const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
@@ -14,6 +15,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	const [errors, setErrors] = useState({}); // Для хранения ошибок валидации
 	const [showPreview, setShowPreview] = useState(false); // Новое состояние для предпросмотра
 	const textareaRef = useRef(null);
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		if (replyTo) {
@@ -251,8 +253,22 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 		);
 	};
 
+	const handleLeave = () => {
+		const user = localStorage.getItem("user");
+		if (socket) {
+			socket.emit("logout", { user, socketID: socket.id });
+		}
+		localStorage.removeItem("user");
+		navigate("/");
+	};
+
 	return (
 		<div className={styles.messageBlock}>
+			<header className={styles.header}>
+				<button className={styles.btn} onClick={handleLeave}>
+					Покинуть чат
+				</button>
+			</header>
 			{showPreview ? (
 				<Preview />
 			) : (

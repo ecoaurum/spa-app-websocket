@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import Pagination from "../pagination/pagination";
 import styles from "./styles.module.css";
 
@@ -13,21 +13,21 @@ const Body = ({
 	loadMoreMessages,
 	fetchSortedComments,
 }) => {
-	const navigate = useNavigate();
+	// const navigate = useNavigate();
 	const [replyingTo, setReplyingTo] = useState(null);
 	const [sortConfig, setSortConfig] = useState({
 		key: "date",
 		direction: "desc",
 	});
 
-	const handleLeave = () => {
-		const user = localStorage.getItem("user");
-		if (socket) {
-			socket.emit("logout", { user, socketID: socket.id });
-		}
-		localStorage.removeItem("user");
-		navigate("/");
-	};
+	// const handleLeave = () => {
+	// 	const user = localStorage.getItem("user");
+	// 	if (socket) {
+	// 		socket.emit("logout", { user, socketID: socket.id });
+	// 	}
+	// 	localStorage.removeItem("user");
+	// 	navigate("/");
+	// };
 
 	const handleReply = (messageId, userName, text) => {
 		setReplyingTo(messageId);
@@ -179,11 +179,11 @@ const Body = ({
 
 	return (
 		<>
-			<header className={styles.header}>
+			{/* <header className={styles.header}>
 				<button className={styles.btn} onClick={handleLeave}>
 					Покинуть чат
 				</button>
-			</header>
+			</header> */}
 
 			<div className={styles.container}>
 				{renderMainComments()}
