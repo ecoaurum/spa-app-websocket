@@ -228,6 +228,11 @@ app.get("/api", (req, res) => {
 
 let users = [];
 
+// Функция для проверки длины сообщения
+function validateMessageLength(text) {
+	return text.length > 0 && text.length <= 1000; //  лимит в 1000 символов
+}
+
 socketIO.on("connect", (socket) => {
 	console.log(`${socket.id} user connected`);
 
@@ -242,11 +247,12 @@ socketIO.on("connect", (socket) => {
 	socket.on("message", async (data) => {
 		// Валидация полей
 		const { name, email, homepage, text, parentId, quotetext } = data;
+
 		// Очистка текстов от потенциально опасных данных, разрешаем только определенные теги
 		const sanitizedText = sanitizeMessage(text);
 		const sanitizedQuoteText = sanitizeMessage(quotetext || "");
 
-		if (!name || !email || !sanitizedText) {
+		if (!name || !email || !validateMessageLength(text)) {
 			return socket.emit("error", {
 				message: "Заполните все обязательные поля",
 			});

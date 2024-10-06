@@ -11,7 +11,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	const [captchaSvg, setCaptchaSvg] = useState(""); // Для хранения CAPTCHA изображения
 	const [image, setImage] = useState(null); // Для хранения файла изображения
 	const [textFile, setTextFile] = useState(null); // Для хранения текстового файла
-	const [messages, setMessages] = useState([]); // Массив для всех сообщений
+	const [errors, setErrors] = useState({}); // Для хранения ошибок валидации
 
 	useEffect(() => {
 		if (replyTo) {
@@ -51,6 +51,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 
 	const handleSend = async (e) => {
 		e.preventDefault();
+		if (!validateInputs()) return; // Прерываем отправку, если есть ошибки
 		try {
 			if (message.trim() && name && email && captcha) {
 				let imageUrl = null;
@@ -121,13 +122,30 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 		setReplyingToMessage(null);
 	};
 
-	// Обработчик для получения нового сообщения от WebSocket
-	useEffect(() => {
-		socket.on("newMessage", (data) => {
-			// Добавляем новое сообщение в массив всех сообщений
-			setMessages((prevMessages) => [...prevMessages, data.newMessage]);
-		});
-	}, [socket]);
+	// Валидация полей
+	const validateInputs = () => {
+		const newErrors = {};
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		const urlRegex = /^(https?:\/\/[^\s$.?#].[^\s]*)$/;
+
+		if (!name.trim()) {
+			newErrors.name = "Имя не должно быть пустым";
+		}
+		if (!email.trim() || !emailRegex.test(email)) {
+			newErrors.email = "Некорректный email";
+		}
+		if (!message.trim()) {
+			newErrors.message = "Сообщение не должно быть пустым";
+		} else if (message.length > 1000) {
+			newErrors.message = "Сообщение не должно превышать 1000 символов";
+		}
+		if (homepage && !urlRegex.test(homepage)) {
+			newErrors.homepage = "Некорректный формат URL";
+		}
+
+		setErrors(newErrors);
+		return Object.keys(newErrors).length === 0; // Если ошибок нет, возвращаем true
+	};
 
 	return (
 		<div className={styles.messageBlock}>
@@ -139,6 +157,8 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					placeholder='Ваше имя'
 					required
 				/>
+				{errors.name && <span className={styles.error}>{errors.name}</span>}
+
 				<input
 					type='email'
 					value={email}
@@ -146,12 +166,18 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					placeholder='Ваш email'
 					required
 				/>
+				{errors.email && <span className={styles.error}>{errors.email}</span>}
+
 				<input
 					type='url'
 					value={homepage}
 					onChange={(e) => setHomepage(e.target.value)}
 					placeholder='Ваша домашняя страница (необязательно)'
 				/>
+				{errors.homepage && (
+					<span className={styles.error}>{errors.homepage}</span>
+				)}
+
 				<textarea
 					className={`${styles.input} ${styles.messageTextarea}`}
 					type='text'
@@ -162,6 +188,10 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					}
 					required
 				/>
+				{errors.message && (
+					<span className={styles.error}>{errors.message}</span>
+				)}
+
 				{/* Поле для загрузки изображения */}
 				<label htmlFor='image-upload'>Загрузить картинку:</label>
 				<input type='file' onChange={handleImageChange} accept='image/*' />
@@ -172,6 +202,10 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 
 				{/* CAPTCHA изображение */}
 				<div dangerouslySetInnerHTML={{ __html: captchaSvg }} />
+				{/* Кнопка для обновления CAPTCHA */}
+				<button type='button' onClick={fetchCaptcha}>
+					Обновить CAPTCHA
+				</button>
 
 				{/* Поле для ввода CAPTCHA */}
 				<input
@@ -181,6 +215,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					placeholder='Введите CAPTCHA'
 					required
 				/>
+
 				<button type='submit'>
 					{replyingToMessage ? "Ответить" : "Отправить"}
 				</button>
