@@ -11,6 +11,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	const [captchaSvg, setCaptchaSvg] = useState(""); // Для хранения CAPTCHA изображения
 	const [image, setImage] = useState(null); // Для хранения файла изображения
 	const [textFile, setTextFile] = useState(null); // Для хранения текстового файла
+	const [messages, setMessages] = useState([]); // Массив для всех сообщений
 
 	useEffect(() => {
 		if (replyTo) {
@@ -39,8 +40,6 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 			console.error("Ошибка запроса CAPTCHA:", error);
 		}
 	};
-
-	const isTyping = () => socket.emit("typing", `${name} is typing`);
 
 	const handleImageChange = (e) => {
 		setImage(e.target.files[0]);
@@ -103,6 +102,8 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					quotetext: replyTo ? replyTo.text : null,
 				});
 
+				setName("");
+				setEmail("");
 				setMessage("");
 				setCaptcha("");
 				fetchCaptcha();
@@ -119,6 +120,14 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 		setReplyTo(null);
 		setReplyingToMessage(null);
 	};
+
+	// Обработчик для получения нового сообщения от WebSocket
+	useEffect(() => {
+		socket.on("newMessage", (data) => {
+			// Добавляем новое сообщение в массив всех сообщений
+			setMessages((prevMessages) => [...prevMessages, data.newMessage]);
+		});
+	}, [socket]);
 
 	return (
 		<div className={styles.messageBlock}>
@@ -148,7 +157,6 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					type='text'
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
-					onKeyDown={isTyping}
 					placeholder={
 						replyingToMessage ? "Введите ваш ответ..." : "Введите сообщение..."
 					}
@@ -161,8 +169,10 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 				{/* Поле для загрузки текстового файла */}
 				<label htmlFor='text-file-upload'>Загрузить текстовый файл:</label>
 				<input type='file' onChange={handleFileChange} accept='.txt' />
+
 				{/* CAPTCHA изображение */}
 				<div dangerouslySetInnerHTML={{ __html: captchaSvg }} />
+
 				{/* Поле для ввода CAPTCHA */}
 				<input
 					type='text'

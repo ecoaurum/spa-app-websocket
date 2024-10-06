@@ -134,7 +134,8 @@ const Body = ({
 								<p>{truncateQuote(element.quotetext)}</p>
 							</div>
 						)}
-						<p>{element.text}</p>
+						{/* Используем dangerouslySetInnerHTML для рендеринга HTML-тегов */}
+						<div dangerouslySetInnerHTML={{ __html: element.text }} />
 					</div>
 					<button
 						onClick={() => handleReply(element.id, element.name, element.text)}

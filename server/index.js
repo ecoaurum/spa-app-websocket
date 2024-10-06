@@ -6,6 +6,8 @@ const multer = require("multer"); // Для загрузки файлов
 const sharp = require("sharp"); // Для изменения размера изображений
 const path = require("path");
 const fs = require("fs");
+const xss = require("xss-clean");
+const sanitizeHtml = require("sanitize-html");
 const app = express();
 const http = require("http").Server(app);
 const socketIO = require("socket.io")(http, {
@@ -27,6 +29,13 @@ app.use(
 		credentials: true, // Это может понадобиться для передачи данных о сессиях
 	})
 );
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use("/uploads", express.static("uploads"));
+// Используем xss-clean как middleware для очистки входящих данных
+app.use(xss());
 
 // Конфигурация multer для загрузки файлов
 const storage = multer.diskStorage({
@@ -126,6 +135,20 @@ app.post("/upload-file", upload.single("file"), async (req, res) => {
 	}
 });
 
+// Конфигурация sanitize-html для разрешения определенных тегов и атрибутов
+const sanitizeOptions = {
+	allowedTags: ["a", "code", "i", "strong"],
+	allowedAttributes: {
+		a: ["href", "title"],
+	},
+	allowedSchemes: ["http", "https"], // Разрешаем только HTTP/HTTPS ссылки
+};
+
+// Очистка текста, разрешая только определенные теги
+function sanitizeMessage(text) {
+	return sanitizeHtml(text, sanitizeOptions);
+}
+
 // Подключение к базе данных MySQL
 const db = mysql.createPool({
 	host: HOST,
@@ -197,10 +220,6 @@ const createTables = async () => {
 };
 createTables();
 
-app.use(cors());
-app.use(express.json());
-app.use("/uploads", express.static("uploads"));
-
 app.get("/api", (req, res) => {
 	res.json({
 		message: "Hello",
@@ -223,7 +242,11 @@ socketIO.on("connect", (socket) => {
 	socket.on("message", async (data) => {
 		// Валидация полей
 		const { name, email, homepage, text, parentId, quotetext } = data;
-		if (!name || !email || !text) {
+		// Очистка текстов от потенциально опасных данных, разрешаем только определенные теги
+		const sanitizedText = sanitizeMessage(text);
+		const sanitizedQuoteText = sanitizeMessage(quotetext || "");
+
+		if (!name || !email || !sanitizedText) {
 			return socket.emit("error", {
 				message: "Заполните все обязательные поля",
 			});
@@ -256,9 +279,9 @@ socketIO.on("connect", (socket) => {
 					name,
 					email,
 					homepage || null,
-					text,
+					sanitizedText,
 					parentId || null,
-					quotetext || null,
+					sanitizedQuoteText || null,
 				]
 			);
 			const newMessage = {
@@ -266,9 +289,9 @@ socketIO.on("connect", (socket) => {
 				name,
 				email,
 				homepage,
-				text,
+				text: sanitizedText,
 				parentId,
-				quotetext,
+				quotetext: sanitizedQuoteText,
 				timestamp: new Date().toISOString(),
 			};
 
@@ -295,8 +318,6 @@ socketIO.on("connect", (socket) => {
 			currentPage: page,
 		});
 	});
-
-	socket.on("typing", (data) => socket.broadcast.emit("responseTyping", data));
 
 	socket.on("logout", ({ user, socketID }) => {
 		users = users.filter((u) => u.socketID !== socketID);
@@ -359,6 +380,7 @@ async function getTotalPages() {
 	return Math.ceil(totalMessages / MESSAGES_PER_PAGE);
 }
 
+// Start server
 const start = async () => {
 	try {
 		http.listen(PORT, (err) => {
