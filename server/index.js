@@ -141,7 +141,7 @@ const sanitizeOptions = {
 	allowedAttributes: {
 		a: ["href", "title"],
 	},
-	allowedSchemes: ["http", "https", "www"], // Разрешаем только HTTP/HTTPS ссылки
+	allowedSchemes: ["http", "https"], // Разрешаем только HTTP/HTTPS ссылки
 };
 
 // Очистка текста, разрешая только определенные теги

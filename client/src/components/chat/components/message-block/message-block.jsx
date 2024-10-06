@@ -129,7 +129,9 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	const validateInputs = () => {
 		const newErrors = {};
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		const urlRegex = /^(https?:\/\/[^\s$.?#].[^\s]*)$/;
+		// const urlRegex = /^(https?:\/\/[^\s$.?#].[^\s]*)$/;
+		const urlRegex =
+			/^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+([/?].*)?$/;
 
 		if (!name.trim()) {
 			newErrors.name = "Имя не должно быть пустым";
@@ -142,8 +144,16 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 		} else if (message.length > 1000) {
 			newErrors.message = "Сообщение не должно превышать 1000 символов";
 		}
-		if (homepage && !urlRegex.test(homepage)) {
-			newErrors.homepage = "Некорректный формат URL";
+		if (homepage) {
+			if (!urlRegex.test(homepage)) {
+				newErrors.homepage = "Некорректный формат URL";
+			} else if (
+				!homepage.startsWith("http://") &&
+				!homepage.startsWith("https://")
+			) {
+				// Если URL валиден, но не начинается с http:// или https://, добавляем https://
+				setHomepage(`https://${homepage}`);
+			}
 		}
 
 		setErrors(newErrors);
@@ -224,7 +234,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					{errors.email && <span className={styles.error}>{errors.email}</span>}
 
 					<input
-						type='url'
+						type='text'
 						value={homepage}
 						onChange={(e) => setHomepage(e.target.value)}
 						placeholder='Ваша домашняя страница (необязательно)'
@@ -250,11 +260,15 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					)}
 
 					{/* Поле для загрузки изображения */}
-					<label htmlFor='image-upload'>Загрузить картинку:</label>
+					<label htmlFor='image-upload'>
+						<strong>Загрузить картинку:</strong>
+					</label>
 					<input type='file' onChange={handleImageChange} accept='image/*' />
 
 					{/* Поле для загрузки текстового файла */}
-					<label htmlFor='text-file-upload'>Загрузить текстовый файл:</label>
+					<label htmlFor='text-file-upload'>
+						<strong>Загрузить текстовый файл:</strong>
+					</label>
 					<input type='file' onChange={handleFileChange} accept='.txt' />
 
 					{/* CAPTCHA изображение */}
