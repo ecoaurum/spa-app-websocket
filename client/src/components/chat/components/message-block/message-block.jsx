@@ -93,6 +93,9 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 
 					const result = await response.json();
 					textFileUrl = result.fileUrl;
+
+					// Логируем URL для проверки
+					console.log("URL текстового файла:", textFileUrl);
 				}
 
 				socket.emit("message", {

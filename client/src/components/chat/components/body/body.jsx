@@ -13,6 +13,7 @@ const Body = ({
 	fetchSortedComments,
 }) => {
 	const [replyingTo, setReplyingTo] = useState(null);
+	const [imageModal, setImageModal] = useState(null); // Состояние для модального окна с изображением
 	const [sortConfig, setSortConfig] = useState({
 		key: "date",
 		direction: "desc",
@@ -112,6 +113,41 @@ const Body = ({
 		return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 	};
 
+	// Компонент для отображения содержимого текстового файла
+	const TextFileViewer = ({ fileUrl }) => {
+		const [fileContent, setFileContent] = useState("");
+
+		useEffect(() => {
+			const fetchFileContent = async () => {
+				try {
+					const response = await fetch(fileUrl);
+					const text = await response.text();
+					setFileContent(text);
+				} catch (error) {
+					console.error("Ошибка загрузки текстового файла:", error);
+				}
+			};
+
+			fetchFileContent();
+		}, [fileUrl]);
+
+		return (
+			<div className={styles.textFileContainer}>
+				<pre>{fileContent}</pre> {/* Отображение содержимого файла */}
+			</div>
+		);
+	};
+
+	// Функция для открытия изображения в модальном окне
+	const handleImageClick = (imageUrl) => {
+		setImageModal(imageUrl);
+	};
+
+	// Функция для закрытия модального окна
+	const closeModal = () => {
+		setImageModal(null);
+	};
+
 	const renderMessages = (messages, depth = 0) => {
 		return messages.map((element) => {
 			const backgroundColor = generateColor(element.name);
@@ -150,6 +186,20 @@ const Body = ({
 										alt='User upload'
 									/>{" "}
 									{/* Рендер изображения */}
+								</div>
+							)}
+
+							{/* Отображаем ссылку на текстовый файл, если он был загружен */}
+							{element.textFileUrl && (
+								<div className={styles.mediaContainer}>
+									<a
+										href={`http://localhost:5000${element.textFileUrl}`}
+										target='_blank'
+										rel='noopener noreferrer'
+										className={styles.textFileLink}
+									>
+										Открыть текстовый файл
+									</a>
 								</div>
 							)}
 						</div>

@@ -128,6 +128,10 @@ app.post("/upload-file", upload.single("file"), async (req, res) => {
 			return res.status(400).json({ message: "Text file exceeds 100KB" });
 		}
 
+		// Логируем путь к файлу для проверки
+		console.log("Текстовый файл загружен по адресу:", filePath);
+
+		// Отправляем путь к файлу обратно клиенту
 		res.status(200).json({ fileUrl: `/uploads/${req.file.filename}` });
 	} catch (error) {
 		console.error("Ошибка при загрузке файла:", error);
@@ -246,7 +250,16 @@ socketIO.on("connect", (socket) => {
 
 	socket.on("message", async (data) => {
 		// Валидация полей
-		const { name, email, homepage, text, parentId, quotetext, imageUrl } = data;
+		const {
+			name,
+			email,
+			homepage,
+			text,
+			parentId,
+			quotetext,
+			imageUrl,
+			textFileUrl,
+		} = data;
 
 		// Очистка текстов от потенциально опасных данных, разрешаем только определенные теги
 		const sanitizedText = sanitizeMessage(text);
@@ -280,15 +293,16 @@ socketIO.on("connect", (socket) => {
 		// Сохранение сообщения в MySQL
 		try {
 			const [result] = await db.query(
-				`INSERT INTO messages (name, email, homepage, text, parentid, quotetext, imageUrl) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+				`INSERT INTO messages (name, email, homepage, text, parentid, quotetext, imageUrl, textFileUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 				[
 					name,
 					email,
 					homepage || null,
-					sanitizedText,
+					text,
 					parentId || null,
-					sanitizedQuoteText || null,
+					quotetext || null,
 					imageUrl || null,
+					textFileUrl || null,
 				]
 			);
 
@@ -297,10 +311,11 @@ socketIO.on("connect", (socket) => {
 				name,
 				email,
 				homepage,
-				text: sanitizedText,
+				text,
 				parentId,
-				quotetext: sanitizedQuoteText,
-				imageUrl, // Добавляем URL изображения в объект сообщения
+				quotetext,
+				imageUrl,
+				textFileUrl, // Сохраняем текстовый файл в объекте
 				timestamp: new Date().toISOString(),
 			};
 
