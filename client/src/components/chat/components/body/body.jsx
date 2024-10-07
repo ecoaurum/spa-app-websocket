@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
 import Pagination from "../pagination/pagination";
 import styles from "./styles.module.css";
 
@@ -13,21 +12,11 @@ const Body = ({
 	loadMoreMessages,
 	fetchSortedComments,
 }) => {
-	// const navigate = useNavigate();
 	const [replyingTo, setReplyingTo] = useState(null);
 	const [sortConfig, setSortConfig] = useState({
 		key: "date",
 		direction: "desc",
 	});
-
-	// const handleLeave = () => {
-	// 	const user = localStorage.getItem("user");
-	// 	if (socket) {
-	// 		socket.emit("logout", { user, socketID: socket.id });
-	// 	}
-	// 	localStorage.removeItem("user");
-	// 	navigate("/");
-	// };
 
 	const handleReply = (messageId, userName, text) => {
 		setReplyingTo(messageId);
@@ -98,8 +87,6 @@ const Body = ({
 					{sortConfig.key === "date" &&
 						(sortConfig.direction === "asc" ? "▲" : "▼")}
 				</th>
-				{/* <th>Message</th>
-				<th>Actions</th> */}
 			</tr>
 		</thead>
 	);
@@ -155,6 +142,16 @@ const Body = ({
 								</div>
 							)}
 							<div dangerouslySetInnerHTML={{ __html: element.text }} />
+							{/* Отображаем изображение, если оно было загружено */}
+							{element.imageUrl && (
+								<div className={styles.imageContainer}>
+									<img
+										src={`http://localhost:5000${element.imageUrl}`}
+										alt='User upload'
+									/>{" "}
+									{/* Рендер изображения */}
+								</div>
+							)}
 						</div>
 						<button
 							onClick={() =>
@@ -179,12 +176,6 @@ const Body = ({
 
 	return (
 		<>
-			{/* <header className={styles.header}>
-				<button className={styles.btn} onClick={handleLeave}>
-					Покинуть чат
-				</button>
-			</header> */}
-
 			<div className={styles.container}>
 				{renderMainComments()}
 				{renderMessages(messages)}

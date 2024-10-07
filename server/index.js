@@ -246,7 +246,7 @@ socketIO.on("connect", (socket) => {
 
 	socket.on("message", async (data) => {
 		// Валидация полей
-		const { name, email, homepage, text, parentId, quotetext } = data;
+		const { name, email, homepage, text, parentId, quotetext, imageUrl } = data;
 
 		// Очистка текстов от потенциально опасных данных, разрешаем только определенные теги
 		const sanitizedText = sanitizeMessage(text);
@@ -280,7 +280,7 @@ socketIO.on("connect", (socket) => {
 		// Сохранение сообщения в MySQL
 		try {
 			const [result] = await db.query(
-				`INSERT INTO messages (name, email, homepage, text, parentid, quotetext) VALUES (?, ?, ?, ?, ?, ?)`,
+				`INSERT INTO messages (name, email, homepage, text, parentid, quotetext, imageUrl) VALUES (?, ?, ?, ?, ?, ?, ?)`,
 				[
 					name,
 					email,
@@ -288,8 +288,10 @@ socketIO.on("connect", (socket) => {
 					sanitizedText,
 					parentId || null,
 					sanitizedQuoteText || null,
+					imageUrl || null,
 				]
 			);
+
 			const newMessage = {
 				id: result.insertId,
 				name,
@@ -298,6 +300,7 @@ socketIO.on("connect", (socket) => {
 				text: sanitizedText,
 				parentId,
 				quotetext: sanitizedQuoteText,
+				imageUrl, // Добавляем URL изображения в объект сообщения
 				timestamp: new Date().toISOString(),
 			};
 
