@@ -14,6 +14,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	const [textFile, setTextFile] = useState(null); // Для хранения текстового файла
 	const [errors, setErrors] = useState({}); // Для хранения ошибок валидации
 	const [fileErrors, setFileErrors] = useState({}); // Для ошибок загрузки файлов
+	const [captchaError, setCaptchaError] = useState(""); // Ошибка ввода CAPTCHA
 	const [showPreview, setShowPreview] = useState(false); // Новое состояние для предпросмотра
 	const textareaRef = useRef(null);
 	const navigate = useNavigate();
@@ -80,6 +81,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 		}
 	};
 
+	// Обработчик отправки сообщения
 	const handleSend = async (e) => {
 		e.preventDefault();
 		if (!validateInputs()) return; // Прерываем отправку, если есть ошибки
@@ -138,11 +140,20 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					quotetext: replyTo ? replyTo.text : null,
 				});
 
+				// Обрабатываем ответ сервера для CAPTCHA
+				socket.on("error", (data) => {
+					if (data.message === "Неверная CAPTCHA") {
+						setCaptchaError("Неверная CAPTCHA, попробуйте снова.");
+						fetchCaptcha(); // Обновляем CAPTCHA
+					}
+				});
+
 				setName("");
 				setEmail("");
 				setHomepage("");
 				setMessage("");
 				setCaptcha("");
+				setCaptchaError(""); // Очищаем ошибку CAPTCHA
 				fetchCaptcha();
 				setReplyTo(null);
 				setImage(null);
@@ -401,6 +412,9 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 						placeholder='Введите CAPTCHA'
 						required
 					/>
+
+					{/* Сообщение об ошибке CAPTCHA */}
+					{captchaError && <span className={styles.error}>{captchaError}</span>}
 
 					<button type='submit'>
 						{replyingToMessage ? "Ответить" : "Отправить"}

@@ -162,3 +162,82 @@
 	max-width: 200%;
 	max-height: 200%;
 }
+
+/* Адаптация для мобильных устройств (до 768px) */
+@media (max-width: 768px) {
+	.container {
+		padding: 10px;
+	}
+
+	.messageRecipient,
+	.messageSender {
+		width: 100%; /* Сообщения занимают всю ширину экрана */
+		font-size: 14px;
+		padding: 8px;
+	}
+
+	.messageImage {
+		width: 100px; /* Размер изображений уменьшен */
+	}
+
+	.mediaContainer {
+		flex-direction: column; /* Картинки и файлы отображаются друг под другом */
+		gap: 5px;
+	}
+
+	.tableHeader {
+		flex-direction: column; /* Заголовки таблицы выравниваются в колонку */
+		padding: 10px;
+	}
+
+	.tableHeader th {
+		padding: 5px 10px;
+	}
+
+	.header {
+		padding: 10px;
+	}
+
+	.btn {
+		width: 100px;
+	}
+}
+
+/* Адаптация для планшетов (от 768px до 1024px) */
+@media (max-width: 1024px) and (min-width: 768px) {
+	.container {
+		padding: 15px;
+	}
+
+	.messageRecipient,
+	.messageSender {
+		width: 90%; /* Уменьшаем ширину сообщений для планшетов */
+		font-size: 14px;
+		padding: 10px;
+	}
+
+	.messageImage {
+		width: 120px; /* Размер изображений уменьшен для планшетов */
+	}
+
+	.mediaContainer {
+		flex-direction: row; /* Картинки и файлы отображаются рядом */
+		gap: 8px;
+	}
+
+	.tableHeader {
+		padding: 15px;
+	}
+
+	.tableHeader th {
+		padding: 8px 15px;
+	}
+
+	.header {
+		padding: 15px;
+	}
+
+	.btn {
+		width: 120px;
+	}
+}

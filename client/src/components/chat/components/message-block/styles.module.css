@@ -94,3 +94,79 @@
 .htmlToolbar button:hover {
 	background-color: #e0e0e0;
 }
+
+/* Адаптация для мобильных устройств (до 768px) */
+@media (max-width: 768px) {
+	.header {
+		padding: 10px;
+	}
+
+	.messageBlock {
+		padding: 10px;
+	}
+
+	.form {
+		gap: 8px;
+	}
+
+	.input {
+		padding: 8px;
+		font-size: 14px;
+	}
+
+	.messageInput {
+		height: 40px;
+	}
+
+	.btn {
+		width: 120px;
+		padding: 8px;
+	}
+
+	.preview {
+		padding: 10px;
+	}
+
+	.htmlToolbar button {
+		padding: 3px 8px;
+		font-size: 14px;
+	}
+}
+
+/* Адаптация для планшетов (от 768px до 1024px) */
+@media (max-width: 1024px) and (min-width: 768px) {
+	.header {
+		padding: 15px;
+	}
+
+	.messageBlock {
+		padding: 15px;
+	}
+
+	.form {
+		gap: 10px;
+	}
+
+	.input {
+		padding: 10px;
+		font-size: 15px;
+	}
+
+	.messageInput {
+		height: 45px;
+	}
+
+	.btn {
+		width: 130px;
+		padding: 9px;
+	}
+
+	.preview {
+		padding: 12px;
+	}
+
+	.htmlToolbar button {
+		padding: 4px 10px;
+		font-size: 15px;
+	}
+}
