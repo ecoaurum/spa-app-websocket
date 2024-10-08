@@ -178,16 +178,23 @@ const Body = ({
 								</div>
 							)}
 							<div dangerouslySetInnerHTML={{ __html: element.text }} />
+
 							{/* Отображаем изображение, если оно было загружено */}
 							{element.imageUrl && (
-								<div className={styles.imageContainer}>
+								<div className={styles.mediaContainer}>
 									<img
 										src={`http://localhost:5000${element.imageUrl}`}
 										alt='User upload'
-									/>{" "}
-									{/* Рендер изображения */}
+										className={styles.messageImage}
+										onClick={() =>
+											handleImageClick(
+												`http://localhost:5000${element.imageUrl}`
+											)
+										} // Увеличение картинки при клике
+									/>
 								</div>
 							)}
+							<br />
 
 							{/* Отображаем ссылку на текстовый файл, если он был загружен */}
 							{element.textFileUrl && (
@@ -239,6 +246,14 @@ const Body = ({
 					totalPages={totalPages}
 					onPageChange={loadMoreMessages}
 				/>
+			)}
+			{/* Модальное окно для отображения увеличенного изображения */}
+			{imageModal && (
+				<div className={styles.modal} onClick={closeModal}>
+					<div className={styles.modalContent}>
+						<img src={imageModal} alt='Enlarged' />
+					</div>
+				</div>
 			)}
 		</>
 	);

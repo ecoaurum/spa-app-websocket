@@ -53,9 +53,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
 	storage: storage,
-	limits: { fileSize: 100 * 1024 }, // Ограничение на 100 КБ для текстовых файлов
 	fileFilter: function (req, file, cb) {
-		// Проверка допустимых типов файлов
 		const filetypes = /jpeg|jpg|png|gif|txt/;
 		const extname = filetypes.test(
 			path.extname(file.originalname).toLowerCase()
@@ -63,15 +61,18 @@ const upload = multer({
 		const mimetype = file.mimetype;
 
 		if (extname && mimetype) {
-			if (mimetype === "text/plain" || /image\/(jpeg|png|gif)/.test(mimetype)) {
-				return cb(null, true);
-			} else {
-				return cb(
-					new Error(
-						"Only images (JPG, PNG, GIF) or text files (TXT) are allowed"
-					)
-				);
+			if (mimetype === "text/plain") {
+				// Для текстовых файлов задаем лимит 100 КБ
+				if (file.size > 100 * 1024) {
+					return cb(new Error("Text file exceeds 100KB"));
+				}
+			} else if (/image\/(jpeg|png|gif)/.test(mimetype)) {
+				// Для изображений задаем лимит 1 МБ
+				if (file.size > 1 * 1024 * 1024) {
+					return cb(new Error("Image file exceeds 1MB"));
+				}
 			}
+			return cb(null, true);
 		}
 		cb(new Error("Invalid file type. Only images and text files are allowed."));
 	},
