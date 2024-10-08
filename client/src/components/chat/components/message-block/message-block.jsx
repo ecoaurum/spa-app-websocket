@@ -35,7 +35,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	// Функция для получения нового изображения CAPTCHA
 	const fetchCaptcha = async () => {
 		try {
-			const response = await fetch("http://localhost:5000/captcha");
+			const response = await fetch("http://localhost:5000/api/captcha");
 			if (response.ok) {
 				const captchaSvgText = await response.text();
 				setCaptchaSvg(captchaSvgText);
@@ -94,10 +94,13 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 				if (image) {
 					const formData = new FormData();
 					formData.append("image", image);
-					const response = await fetch("http://localhost:5000/upload-image", {
-						method: "POST",
-						body: formData,
-					});
+					const response = await fetch(
+						"http://localhost:5000/api/upload-image",
+						{
+							method: "POST",
+							body: formData,
+						}
+					);
 
 					if (!response.ok) {
 						throw new Error("Ошибка загрузки изображения");
@@ -111,10 +114,13 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 				if (textFile) {
 					const formData = new FormData();
 					formData.append("file", textFile);
-					const response = await fetch("http://localhost:5000/upload-file", {
-						method: "POST",
-						body: formData,
-					});
+					const response = await fetch(
+						"http://localhost:5000/api/upload-file",
+						{
+							method: "POST",
+							body: formData,
+						}
+					);
 
 					if (!response.ok) {
 						throw new Error("Ошибка загрузки текстового файла");
