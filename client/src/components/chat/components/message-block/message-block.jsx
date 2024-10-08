@@ -13,6 +13,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	const [image, setImage] = useState(null); // Для хранения файла изображения
 	const [textFile, setTextFile] = useState(null); // Для хранения текстового файла
 	const [errors, setErrors] = useState({}); // Для хранения ошибок валидации
+	const [fileErrors, setFileErrors] = useState({}); // Для ошибок загрузки файлов
 	const [showPreview, setShowPreview] = useState(false); // Новое состояние для предпросмотра
 	const textareaRef = useRef(null);
 	const navigate = useNavigate();
@@ -45,12 +46,38 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 		}
 	};
 
+	// Обработчик изменения изображения
 	const handleImageChange = (e) => {
-		setImage(e.target.files[0]);
+		const file = e.target.files[0];
+
+		// Проверяем размер файла изображения
+		if (file && file.size > 1 * 1024 * 1024) {
+			setFileErrors((prev) => ({
+				...prev,
+				image: "Размер изображения не должен превышать 1 МБ.",
+			}));
+			setImage(null); // Очищаем, если размер превышает
+		} else {
+			setFileErrors((prev) => ({ ...prev, image: "" }));
+			setImage(file);
+		}
 	};
 
+	// Обработчик изменения текстового файла
 	const handleFileChange = (e) => {
-		setTextFile(e.target.files[0]);
+		const file = e.target.files[0];
+
+		// Проверяем размер текстового файла
+		if (file && file.size > 100 * 1024) {
+			setFileErrors((prev) => ({
+				...prev,
+				textFile: "Размер текстового файла не должен превышать 100 КБ.",
+			}));
+			setTextFile(null); // Очищаем, если размер превышает
+		} else {
+			setFileErrors((prev) => ({ ...prev, textFile: "" }));
+			setTextFile(file);
+		}
 	};
 
 	const handleSend = async (e) => {
@@ -98,6 +125,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					console.log("URL текстового файла:", textFileUrl);
 				}
 
+				// Отправка сообщения на сервер через socket
 				socket.emit("message", {
 					name,
 					email,
@@ -276,6 +304,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 				<Preview />
 			) : (
 				<form className={styles.form} onSubmit={handleSend}>
+					{/* Поле ввода имени */}
 					<input
 						type='text'
 						value={name}
@@ -285,6 +314,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					/>
 					{errors.name && <span className={styles.error}>{errors.name}</span>}
 
+					{/* Поле ввода email */}
 					<input
 						type='email'
 						value={email}
@@ -294,6 +324,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					/>
 					{errors.email && <span className={styles.error}>{errors.email}</span>}
 
+					{/* Поле ввода домашней страницы */}
 					<input
 						type='text'
 						value={homepage}
@@ -319,6 +350,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 						</button>
 					</div>
 
+					{/* Поле для сообщения */}
 					<textarea
 						className={`${styles.input} ${styles.messageTextarea}`}
 						ref={textareaRef}
@@ -341,12 +373,18 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 						<strong>Загрузить картинку:</strong>
 					</label>
 					<input type='file' onChange={handleImageChange} accept='image/*' />
+					{fileErrors.image && (
+						<span className={styles.error}>{fileErrors.image}</span>
+					)}
 
 					{/* Поле для загрузки текстового файла */}
 					<label htmlFor='text-file-upload'>
 						<strong>Загрузить текстовый файл:</strong>
 					</label>
 					<input type='file' onChange={handleFileChange} accept='.txt' />
+					{fileErrors.textFile && (
+						<span className={styles.error}>{fileErrors.textFile}</span>
+					)}
 
 					{/* CAPTCHA изображение */}
 					<div dangerouslySetInnerHTML={{ __html: captchaSvg }} />
