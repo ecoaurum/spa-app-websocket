@@ -41,6 +41,7 @@
 #   app-network:
 #     driver: bridge
 
+version: "3.8"
 services:
   server:
     build: ./server
@@ -55,8 +56,6 @@ services:
       - app-network
     volumes:
       - ./server/uploads:/app/uploads
-    command:
-      ["sh", "-c", "npm install && ./wait-for-it.sh mysql:3306 -- npm start"]
 
   client:
     build: ./client
@@ -70,10 +69,8 @@ services:
     image: mysql:8.0
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: Kd73PkjwqPSeZQaTA
-      MYSQL_DATABASE: chat_socket
-    ports:
-      - "3307:3306"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
     volumes:
       - db_data:/var/lib/mysql
     networks:

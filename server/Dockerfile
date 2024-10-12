@@ -7,7 +7,7 @@ WORKDIR /app
 # Открываем порт для сервера
 EXPOSE 5000
 
-RUN apk add --no-cache bash
+# RUN apk add --no-cache bash
 
 # Копируем package.json и package-lock.json
 COPY package*.json ./

@@ -69,8 +69,6 @@ const connectDB = async () => {
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
-		const [rows] = await connection.query("SELECT * FROM messages"); // Получение данных из таблицы
-		console.log(rows);
 		console.log("Database connected and table created if not exists");
 		connection.release(); // Освобождение соединения
 	} catch (err) {
