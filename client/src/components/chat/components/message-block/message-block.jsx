@@ -130,7 +130,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					textFileUrl = result.fileUrl;
 
 					// Логируем URL для проверки
-					console.log("URL текстового файла:", textFileUrl);
+					console.log("URL текстового файла!!!!:", textFileUrl);
 				}
 
 				// Отправка сообщения на сервер через socket

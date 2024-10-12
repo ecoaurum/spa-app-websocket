@@ -1,0 +1,87 @@
+# services:
+#   server:
+#     build: ./server
+#     restart: always
+#     ports:
+#       - "5000:5000"
+#     env_file:
+#       - ./server/.env
+#     depends_on:
+#       - mysql
+#     networks:
+#       - app-network
+#     volumes:
+#       - ./server/uploads:/app/uploads
+
+#   client:
+#     build: ./client
+#     restart: always
+#     ports:
+#       - "5173:5173"
+#     networks:
+#       - app-network
+
+#   mysql:
+#     image: mysql:8.0
+#     restart: always
+#     environment:
+#       MYSQL_ROOT_PASSWORD: Kd73PkjwqPSeZQaTA
+#       MYSQL_DATABASE: chat_socket
+#     ports:
+#       - "3307:3306"
+#     volumes:
+#       - db_data:/var/lib/mysql
+#     networks:
+#       - app-network
+
+# volumes:
+#   db_data:
+
+# networks:
+#   app-network:
+#     driver: bridge
+
+services:
+  server:
+    build: ./server
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./server/.env
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+    volumes:
+      - ./server/uploads:/app/uploads
+    command:
+      ["sh", "-c", "npm install && ./wait-for-it.sh mysql:3306 -- npm start"]
+
+  client:
+    build: ./client
+    restart: always
+    ports:
+      - "5173:5173"
+    networks:
+      - app-network
+
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Kd73PkjwqPSeZQaTA
+      MYSQL_DATABASE: chat_socket
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app-network
+
+volumes:
+  db_data:
+
+networks:
+  app-network:
+    driver: bridge
