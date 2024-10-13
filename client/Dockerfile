@@ -4,10 +4,6 @@ FROM node:20.17.0-alpine
 # Рабочая директория
 WORKDIR /app
 
-# Открываем порт для клиента
-EXPOSE 5173
-
-# RUN apk add --no-cache bash
 
 # Копируем package.json и package-lock.json
 COPY package*.json ./
@@ -21,5 +17,8 @@ COPY . .
 # Собираем приложение для продакшн
 RUN npm run build
 
+# Открываем стандартный HTTP порт
+EXPOSE 80
+
 # Запускаем сервер (если  работать локально)
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "preview"]
