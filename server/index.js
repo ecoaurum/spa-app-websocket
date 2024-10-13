@@ -14,7 +14,9 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server, {
 	cors: {
-		origin: CLIENT_URL,
+		origin: CLIENT_URL, // Разрешаем запросы с фронтенда
+		methods: ["GET", "POST"],
+		credentials: true, // Включаем передачу куки
 	},
 });
 
