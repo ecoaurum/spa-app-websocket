@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-require("dotenv").config();
+// require("dotenv").config();
 import styles from "./styles.module.css";
 
 const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
