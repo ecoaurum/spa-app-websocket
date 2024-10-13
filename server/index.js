@@ -8,7 +8,8 @@ const { connectDB } = require("./config/db");
 const socketHandlers = require("./utils/socketHandlers");
 
 const CLIENT_URL =
-	process.env.CLIENT_URL || "https://mindful-success-frontend.up.railway.app/";
+	process.env.CLIENT_URL.replace(/\/$/, "") ||
+	"https://mindful-success-frontend.up.railway.app/";
 
 const app = express();
 const server = http.createServer(app);
