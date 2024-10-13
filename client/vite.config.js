@@ -22,4 +22,7 @@ export default defineConfig({
 		port: 80, // Порт для продакшн-сервера
 		host: "0.0.0.0", // Открываем для внешних запросов
 	},
+	define: {
+		"process.env.VITE_API_URL": JSON.stringify(process.env.VITE_API_URL),
+	},
 });
