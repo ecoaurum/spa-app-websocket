@@ -8,14 +8,13 @@ const { connectDB } = require("./config/db");
 const socketHandlers = require("./utils/socketHandlers");
 
 const CLIENT_URL =
-	process.env.CLIENT_URL.replace(/\/$/, "") ||
-	"https://mindful-success-frontend.up.railway.app/";
+	process.env.CLIENT_URL || "https://mindful-success-frontend.up.railway.app";
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server, {
 	cors: {
-		origin: CLIENT_URL, // Разрешаем запросы с фронтенда
+		origin: CLIENT_URL.replace(/\/$/, ""), // Разрешаем запросы с фронтенда
 		methods: ["GET", "POST"],
 		credentials: true, // Включаем передачу куки
 	},
@@ -27,7 +26,7 @@ const HOST = "0.0.0.0";
 // Middleware
 app.use(
 	cors({
-		origin: CLIENT_URL,
+		origin: CLIENT_URL.replace(/\/$/, ""),
 		methods: ["GET", "POST"],
 		credentials: true,
 	})
