@@ -7,6 +7,7 @@ const db = mysql.createPool({
 	user: process.env.MYSQLUSER,
 	password: process.env.MYSQLPASSWORD,
 	database: process.env.MYSQLDATABASE,
+	port: process.env.MYSQLPORT || 3306,
 });
 
 // Функция для создания таблицы, если она не существует
