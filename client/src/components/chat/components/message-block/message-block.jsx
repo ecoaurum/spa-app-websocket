@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+require("dotenv").config();
 import styles from "./styles.module.css";
 
 const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
@@ -35,9 +36,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	// Функция для получения нового изображения CAPTCHA
 	const fetchCaptcha = async () => {
 		try {
-			const response = await fetch(
-				"https://spa-app-websocket-server.up.railway.app/api/captcha"
-			);
+			const response = await fetch(`${process.env.VITE_API_URL}/api/captcha`);
 			if (response.ok) {
 				const captchaSvgText = await response.text();
 				setCaptchaSvg(captchaSvgText);
