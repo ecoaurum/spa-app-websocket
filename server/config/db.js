@@ -3,11 +3,7 @@ require("dotenv").config();
 
 // Подключение к базе данных MySQL
 const db = mysql.createPool({
-	host: process.env.MYSQLHOST || "mysql",
-	user: process.env.MYSQLUSER,
-	password: process.env.MYSQLPASSWORD,
-	database: process.env.MYSQLDATABASE,
-	port: process.env.MYSQLPORT || 3306,
+	uri: process.env.MYSQL_URL, // Используем полный URL подключения
 });
 
 // Функция для создания таблицы, если она не существует
