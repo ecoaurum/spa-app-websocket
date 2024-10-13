@@ -7,21 +7,24 @@ const apiRoutes = require("./routes/api");
 const { connectDB } = require("./config/db");
 const socketHandlers = require("./utils/socketHandlers");
 
+const CLIENT_URL =
+	process.env.CLIENT_URL || "https://mindful-success-frontend.up.railway.app/";
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server, {
 	cors: {
-		origin: "http://localhost:5173",
+		origin: CLIENT_URL,
 	},
 });
 
-const PORT = 5000;
-const HOST = "localhost";
+const PORT = process.env.PORT || 5000;
+const HOST = "0.0.0.0";
 
 // Middleware
 app.use(
 	cors({
-		origin: "http://localhost:5173",
+		origin: CLIENT_URL,
 		methods: ["GET", "POST"],
 		credentials: true,
 	})

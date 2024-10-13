@@ -183,12 +183,12 @@ const Body = ({
 							{element.imageUrl && (
 								<div className={styles.mediaContainer}>
 									<img
-										src={`http://localhost:5000${element.imageUrl}`}
+										src={`https://spa-app-websocket-server.up.railway.app/${element.imageUrl}`}
 										alt='User upload'
 										className={styles.messageImage}
 										onClick={() =>
 											handleImageClick(
-												`http://localhost:5000${element.imageUrl}`
+												`https://spa-app-websocket-server.up.railway.app/${element.imageUrl}`
 											)
 										} // Увеличение картинки при клике
 									/>
@@ -200,7 +200,7 @@ const Body = ({
 							{element.textFileUrl && (
 								<div className={styles.mediaContainer}>
 									<a
-										href={`http://localhost:5000${element.textFileUrl}`}
+										href={`https://spa-app-websocket-server.up.railway.app/${element.textFileUrl}`}
 										target='_blank'
 										rel='noopener noreferrer'
 										className={styles.textFileLink}

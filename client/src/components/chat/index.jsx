@@ -68,7 +68,7 @@ const ChatPage = ({ socket }) => {
 	const fetchSortedComments = async (sort, order) => {
 		try {
 			const response = await fetch(
-				`http://localhost:5000/api/main-comments?sort=${sort}&order=${order}`
+				`https://spa-app-websocket-server.up.railway.app/api/main-comments?sort=${sort}&order=${order}`
 			);
 			if (!response.ok) {
 				throw new Error("Network response was not ok");

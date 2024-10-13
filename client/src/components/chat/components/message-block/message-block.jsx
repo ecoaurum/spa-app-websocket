@@ -35,7 +35,9 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	// Функция для получения нового изображения CAPTCHA
 	const fetchCaptcha = async () => {
 		try {
-			const response = await fetch("http://localhost:5000/api/captcha");
+			const response = await fetch(
+				"https://spa-app-websocket-server.up.railway.app/api/captcha"
+			);
 			if (response.ok) {
 				const captchaSvgText = await response.text();
 				setCaptchaSvg(captchaSvgText);
@@ -95,7 +97,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					const formData = new FormData();
 					formData.append("image", image);
 					const response = await fetch(
-						"http://localhost:5000/api/upload-image",
+						"https://spa-app-websocket-server.up.railway.app/api/upload-image",
 						{
 							method: "POST",
 							body: formData,
@@ -115,7 +117,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					const formData = new FormData();
 					formData.append("file", textFile);
 					const response = await fetch(
-						"http://localhost:5000/api/upload-file",
+						"https://spa-app-websocket-server.up.railway.app/api/upload-file",
 						{
 							method: "POST",
 							body: formData,
