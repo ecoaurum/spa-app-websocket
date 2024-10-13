@@ -5,7 +5,7 @@ FROM node:20.17.0-alpine
 WORKDIR /app
 
 # Открываем порт для сервера
-EXPOSE 5000
+EXPOSE 8080
 
 # RUN apk add --no-cache bash
 
@@ -18,8 +18,6 @@ RUN npm install
 # Копируем все файлы сервера
 COPY . .
 
-# Открываем порт для сервера
-EXPOSE $PORT
 
 # Запускаем приложение
 CMD [ "npm", "start" ]
