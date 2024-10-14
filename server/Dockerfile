@@ -7,8 +7,6 @@ WORKDIR /app
 # Открываем порт для сервера
 EXPOSE 8080
 
-# RUN apk add --no-cache bash
-
 # Копируем package.json и package-lock.json
 COPY package*.json ./
 
@@ -17,7 +15,6 @@ RUN npm install
 
 # Копируем все файлы сервера
 COPY . .
-
 
 # Запускаем приложение
 CMD [ "npm", "start" ]

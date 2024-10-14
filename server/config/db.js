@@ -1,19 +1,21 @@
+// Импорт модуля mysql2 для работы с MySQL
 const mysql = require("mysql2/promise");
-require("dotenv").config();
+require("dotenv").config(); // Подключение переменных окружения из .env файла
 
 // Подключение к базе данных MySQL
 const db = mysql.createPool({
-	host: process.env.MYSQLHOST || "mysql",
-	user: process.env.MYSQLUSER,
-	password: process.env.MYSQLPASSWORD,
-	database: process.env.MYSQLDATABASE,
-	port: process.env.MYSQLPORT || 3306,
+	host: process.env.MYSQLHOST || "mysql", // Хост базы данных
+	user: process.env.MYSQLUSER, // Имя пользователя базы данных
+	password: process.env.MYSQLPASSWORD, // Пароль для подключения к базе данных
+	database: process.env.MYSQLDATABASE, // Имя базы данных
+	port: process.env.MYSQLPORT || 3306, // Порт для подключения к базе данных (по умолчанию 3306)
 });
 
-// Функция для создания таблицы, если она не существует
+// Функция для проверки и создания таблицы сообщений, если она не существует
 const connectDB = async () => {
 	try {
-		const connection = await db.getConnection(); // Создание соединения
+		const connection = await db.getConnection(); // Создание соединения с базой данных
+		// SQL-запрос для создания таблицы
 		await connection.query(`
       CREATE TABLE IF NOT EXISTS messages (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -28,10 +30,10 @@ const connectDB = async () => {
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
-		console.log("Database connected and table created if not exists");
+		console.log("Database connected and table created if not exists"); // Логирование успешного подключения к базе данных и создания таблицы
 		connection.release(); // Освобождение соединения
 	} catch (err) {
-		console.error("Error connecting to database:", err);
+		console.error("Error connecting to database:", err); // Лог ошибки подключения
 	}
 };
 
