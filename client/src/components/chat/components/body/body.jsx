@@ -183,12 +183,12 @@ const Body = ({
 							{element.imageUrl && (
 								<div className={styles.mediaContainer}>
 									<img
-										src={`https://spa-app-websocket-server.up.railway.app/${element.imageUrl}`}
+										src={`https://spa-app-websocket-server.up.railway.app${element.imageUrl}`}
 										alt='User upload'
 										className={styles.messageImage}
 										onClick={() =>
 											handleImageClick(
-												`https://spa-app-websocket-server.up.railway.app/${element.imageUrl}`
+												`https://spa-app-websocket-server.up.railway.app${element.imageUrl}`
 											)
 										} // Увеличение картинки при клике
 									/>
