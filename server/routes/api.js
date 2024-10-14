@@ -5,7 +5,10 @@ const path = require("path");
 const fs = require("fs");
 const { generateCaptcha } = require("../controllers/captchaController");
 const { uploadImage, uploadFile } = require("../controllers/fileController");
-const { getMainComments } = require("../controllers/messageController");
+const {
+	getMainComments,
+	addMessage,
+} = require("../controllers/messageController");
 
 const storage = multer.diskStorage({
 	destination: function (req, file, cb) {
@@ -56,6 +59,38 @@ router.get("/main-comments", async (req, res) => {
 	} catch (error) {
 		console.error("Error getting comments:", error);
 		res.status(500).json({ error: "Internal server error" });
+	}
+});
+
+// Маршрут для добавления нового сообщения
+router.post("/messages", async (req, res) => {
+	const {
+		name,
+		email,
+		homepage,
+		text,
+		parentId,
+		quotetext,
+		imageUrl,
+		textFileUrl,
+	} = req.body;
+
+	try {
+		const messageId = await addMessage({
+			name,
+			email,
+			homepage,
+			text,
+			parentId,
+			quotetext,
+			imageUrl,
+			textFileUrl,
+		});
+
+		res.status(201).json({ message: "Message added successfully", messageId });
+	} catch (err) {
+		console.error("Error inserting message:", err);
+		res.status(500).json({ error: "Failed to add message" });
 	}
 });
 

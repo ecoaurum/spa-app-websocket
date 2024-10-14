@@ -23,6 +23,17 @@ exports.createMessage = async (messageData) => {
 	};
 };
 
+exports.addMessage = async (messageData) => {
+	const sanitizedText = sanitizeMessage(messageData.text);
+	const sanitizedQuoteText = sanitizeMessage(messageData.quotetext || "");
+	const newMessageId = await Message.create({
+		...messageData,
+		text: sanitizedText,
+		quotetext: sanitizedQuoteText,
+	});
+	return newMessageId;
+};
+
 exports.getMessagesPage = async (page) => {
 	const messages = await Message.getPage(page, MESSAGES_PER_PAGE);
 	return buildMessageTree(messages);
