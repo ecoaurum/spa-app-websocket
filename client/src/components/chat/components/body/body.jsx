@@ -200,7 +200,7 @@ const Body = ({
 							{element.textFileUrl && (
 								<div className={styles.mediaContainer}>
 									<a
-										href={`https://spa-app-websocket-server.up.railway.app/${element.textFileUrl}`}
+										href={`https://spa-app-websocket-server.up.railway.app${element.textFileUrl}`}
 										target='_blank'
 										rel='noopener noreferrer'
 										className={styles.textFileLink}
