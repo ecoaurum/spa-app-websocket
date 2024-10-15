@@ -1,25 +1,32 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-// require("dotenv").config();
-import styles from "./styles.module.css";
+// Этот код представляет собой компонент React,
+// который позволяет пользователям отправлять сообщения с различными полями,
+// такими как имя, email, домашняя страница, сообщение, изображение и текстовый файл.
+// Компонент также включает в себя CAPTCHA для защиты от спама.
+//=====================================================================
 
+import React, { useState, useEffect, useRef } from "react"; // Импорт хуков React
+import { useNavigate } from "react-router-dom"; // Хук для навигации между страницами
+import styles from "./styles.module.css"; // Импортируем стили
+
+// Компонент MessageBlock отвечает за форму отправки сообщений
 const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
-	const [message, setMessage] = useState("");
-	const [name, setName] = useState("");
-	const [email, setEmail] = useState("");
-	const [homepage, setHomepage] = useState("");
-	const [replyingToMessage, setReplyingToMessage] = useState(null);
-	const [captcha, setCaptcha] = useState("");
-	const [captchaSvg, setCaptchaSvg] = useState(""); // Для хранения CAPTCHA изображения
-	const [image, setImage] = useState(null); // Для хранения файла изображения
-	const [textFile, setTextFile] = useState(null); // Для хранения текстового файла
-	const [errors, setErrors] = useState({}); // Для хранения ошибок валидации
-	const [fileErrors, setFileErrors] = useState({}); // Для ошибок загрузки файлов
-	const [captchaError, setCaptchaError] = useState(""); // Ошибка ввода CAPTCHA
-	const [showPreview, setShowPreview] = useState(false); // Новое состояние для предпросмотра
-	const textareaRef = useRef(null);
-	const navigate = useNavigate();
+	const [message, setMessage] = useState(""); // Состояние для текста сообщения
+	const [name, setName] = useState(""); // Состояние для имени пользователя
+	const [email, setEmail] = useState(""); // Состояние для email
+	const [homepage, setHomepage] = useState(""); // Состояние для домашней страницы
+	const [replyingToMessage, setReplyingToMessage] = useState(null); // Состояние для отслеживания ответа на сообщение
+	const [captcha, setCaptcha] = useState(""); // Состояние для CAPTCHA
+	const [captchaSvg, setCaptchaSvg] = useState(""); // Состояние для хранения CAPTCHA изображения
+	const [image, setImage] = useState(null); // Состояние для хранения файла изображения
+	const [textFile, setTextFile] = useState(null); // Состояние для хранения текстового файла
+	const [errors, setErrors] = useState({}); // Состояние для хранения ошибок валидации
+	const [fileErrors, setFileErrors] = useState({}); // Состояние для ошибок загрузки файлов
+	const [captchaError, setCaptchaError] = useState(""); // Состояние -  ошибка ввода CAPTCHA
+	const [showPreview, setShowPreview] = useState(false); // Состояние для предпросмотра
+	const textareaRef = useRef(null); // Ссылка на текстовое поле для вставки тегов
+	const navigate = useNavigate(); // Хук для навигации
 
+	// Установка сообщения, на которое пользователь отвечает
 	useEffect(() => {
 		if (replyTo) {
 			setReplyingToMessage(replyTo);
@@ -41,7 +48,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 			);
 			if (response.ok) {
 				const captchaSvgText = await response.text();
-				setCaptchaSvg(captchaSvgText);
+				setCaptchaSvg(captchaSvgText); // Сохраняем полученное изображение CAPTCHA
 			} else {
 				console.error("Ошибка при получении CAPTCHA");
 			}
@@ -50,7 +57,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 		}
 	};
 
-	// Обработчик изменения изображения
+	// Обработчик изменения загружаемого изображения
 	const handleImageChange = (e) => {
 		const file = e.target.files[0];
 
@@ -60,14 +67,14 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 				...prev,
 				image: "Размер изображения не должен превышать 1 МБ.",
 			}));
-			setImage(null); // Очищаем, если размер превышает
+			setImage(null); // Очищаем, если размер превышает лимит
 		} else {
 			setFileErrors((prev) => ({ ...prev, image: "" }));
 			setImage(file);
 		}
 	};
 
-	// Обработчик изменения текстового файла
+	// Обработчик изменения загружаемого текстового файла
 	const handleFileChange = (e) => {
 		const file = e.target.files[0];
 
@@ -77,7 +84,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 				...prev,
 				textFile: "Размер текстового файла не должен превышать 100 КБ.",
 			}));
-			setTextFile(null); // Очищаем, если размер превышает
+			setTextFile(null); // Очищаем, если размер превышает лимит
 		} else {
 			setFileErrors((prev) => ({ ...prev, textFile: "" }));
 			setTextFile(file);
@@ -86,17 +93,19 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 
 	// Обработчик отправки сообщения
 	const handleSend = async (e) => {
-		e.preventDefault();
+		e.preventDefault(); // Предотвращаем стандартное поведение формы
 		if (!validateInputs()) return; // Прерываем отправку, если есть ошибки
 		try {
 			if (message.trim() && name && email && captcha) {
-				let imageUrl = null;
-				let textFileUrl = null;
+				// Проверяем, что все поля заполнены
+				let imageUrl = null; // Переменная для хранения URL загруженного изображения
+				let textFileUrl = null; // Переменная для хранения URL загруженного текстового файла
 
 				// Загружаем изображение, если выбрано
 				if (image) {
-					const formData = new FormData();
-					formData.append("image", image);
+					const formData = new FormData(); // Создаем объект FormData для отправки изображения
+					formData.append("image", image); // Добавляем изображение в FormData
+					// Отправляем запрос на загрузку изображения
 					const response = await fetch(
 						"https://spa-app-websocket-server.up.railway.app/api/upload-image",
 						{
@@ -106,17 +115,19 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					);
 
 					if (!response.ok) {
-						throw new Error("Ошибка загрузки изображения");
+						// Проверяем, что запрос прошел успешно
+						throw new Error("Ошибка загрузки изображения"); // Бросаем ошибку, если запрос не успешен
 					}
 
-					const result = await response.json();
-					imageUrl = result.imageUrl;
+					const result = await response.json(); // Парсим ответ сервера
+					imageUrl = result.imageUrl; // Сохраняем URL загруженного изображения
 				}
 
 				// Загружаем текстовый файл, если выбран
 				if (textFile) {
-					const formData = new FormData();
-					formData.append("file", textFile);
+					const formData = new FormData(); // Создаем объект FormData для отправки текстового файла
+					formData.append("file", textFile); // Добавляем текстовый файл в FormData
+					// Отправляем запрос на загрузку текстового файла
 					const response = await fetch(
 						"https://spa-app-websocket-server.up.railway.app/api/upload-file",
 						{
@@ -126,11 +137,12 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					);
 
 					if (!response.ok) {
-						throw new Error("Ошибка загрузки текстового файла");
+						// Проверяем, что запрос прошел успешно
+						throw new Error("Ошибка загрузки текстового файла"); // Бросаем ошибку, если запрос не успешен
 					}
 
-					const result = await response.json();
-					textFileUrl = result.fileUrl;
+					const result = await response.json(); // Парсим ответ сервера
+					textFileUrl = result.fileUrl; // Сохраняем URL загруженного текстового файла
 
 					// Логируем URL для проверки
 					console.log("URL текстового файла!!!!:", textFileUrl);
@@ -144,69 +156,76 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					text: message,
 					captcha,
 					imageUrl,
-					textFileUrl, // Отправляем URL текстового файла
-					parentId: replyTo ? replyTo.id : null,
-					quotetext: replyTo ? replyTo.text : null,
+					textFileUrl,
+					parentId: replyTo ? replyTo.id : null, // Если это ответ на другое сообщение, указываем его ID
+					quotetext: replyTo ? replyTo.text : null, // Если это ответ на другое сообщение, включаем текст цитаты
 				});
 
 				// Обрабатываем ответ сервера для CAPTCHA
 				socket.on("error", (data) => {
 					if (data.message === "Неверная CAPTCHA") {
-						setCaptchaError("Неверная CAPTCHA, попробуйте снова.");
+						// Если CAPTCHA неверна
+						setCaptchaError("Неверная CAPTCHA, попробуйте снова."); // Устанавливаем сообщение об ошибке
 						fetchCaptcha(); // Обновляем CAPTCHA
 					}
 				});
 
+				// Очищаем поля формы после отправки
 				setName("");
 				setEmail("");
 				setHomepage("");
 				setMessage("");
 				setCaptcha("");
-				setCaptchaError(""); // Очищаем ошибку CAPTCHA
-				fetchCaptcha();
-				setReplyTo(null);
-				setImage(null);
-				setTextFile(null); // Очищаем текстовый файл после отправки
-				setShowPreview(false);
+				setCaptchaError(""); // Очищаем сообщение об ошибке CAPTCHA
+				fetchCaptcha(); // Обновляем CAPTCHA
+				setReplyTo(null); // Сбрасываем состояние ответа
+				setImage(null); // Убираем загруженное изображение
+				setTextFile(null); // Убираем загруженный текстовый файл
+				setShowPreview(false); // Скрываем предпросмотр
 			}
 		} catch (error) {
 			console.error("Ошибка при отправке сообщения:", error);
 		}
 	};
 
+	// Отмена ответа на сообщение
 	const cancelReply = () => {
-		setReplyTo(null);
-		setReplyingToMessage(null);
+		setReplyTo(null); // Сбрасываем состояние ответа
+		setReplyingToMessage(null); // Очищаем сообщение, на которое отвечаем
 	};
 
 	// функция для обработки ввода в поле имени
 	const handleNameChange = (e) => {
-		const inputValue = e.target.value;
-		const latinOnly = inputValue.replace(/[^a-zA-Z]/g, "");
-		setName(latinOnly);
+		const inputValue = e.target.value; // Получаем значение из поля ввода
+		const latinOnly = inputValue.replace(/[^a-zA-Z]/g, ""); // Оставляем только латинские буквы
+		setName(latinOnly); // Устанавливаем состояние с отфильтрованным значением
 	};
 
-	// Валидация полей
+	// Валидация полей формы перед отправкой
 	const validateInputs = () => {
-		const newErrors = {};
-		const latinRegex = /^[a-zA-Z]+$/;
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		const newErrors = {}; // Объект для хранения ошибок валидации
+		const latinRegex = /^[a-zA-Z]+$/; // Регулярное выражение для проверки латинских букв
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Регулярное выражение для проверки email
 		const urlRegex =
-			/^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+([/?].*)?$/;
+			/^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+([/?].*)?$/; // Регулярное выражение для проверки URL
 
+		// Валидация поля имени
 		if (!name.trim()) {
-			newErrors.name = "Имя не должно быть пустым";
+			newErrors.name = "Имя не должно быть пустым"; // Добавляем ошибку, если имя пустое
 		} else if (!latinRegex.test(name)) {
-			newErrors.name = "Имя должно содержать только латинские буквы";
+			newErrors.name = "Имя должно содержать только латинские буквы"; // Добавляем ошибку, если имя содержит не латинские буквы
 		}
+		// Валидация поля с email
 		if (!email.trim() || !emailRegex.test(email)) {
-			newErrors.email = "Некорректный email";
+			newErrors.email = "Некорректный email"; // Добавляем ошибку, если email некорректен
 		}
+		// Валидация поля с тектсом сообщения
 		if (!message.trim()) {
-			newErrors.message = "Сообщение не должно быть пустым";
+			newErrors.message = "Сообщение не должно быть пустым"; // Добавляем ошибку, если сообщение пустое
 		} else if (message.length > 1000) {
-			newErrors.message = "Сообщение не должно превышать 1000 символов";
+			newErrors.message = "Сообщение не должно превышать 1000 символов"; // Добавляем ошибку, если сообщение слишком длинное
 		}
+		// Валидация домашней страницы (если указана)
 		if (homepage) {
 			if (!urlRegex.test(homepage)) {
 				newErrors.homepage = "Некорректный формат URL";
@@ -225,13 +244,16 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 
 	// Новая функция для обработки предпросмотра
 	const handlePreview = () => {
+		// Проверяем, прошли ли все поля валидацию
 		if (validateInputs()) {
+			// Если да, показываем окно предпросмотра
 			setShowPreview(true);
 		}
 	};
 
-	// Компонент предпросмотра
+	// Компонент предпросмотра сообщения
 	const Preview = () => (
+		// Основной контейнер предпросмотра с применением стилей
 		<div className={styles.preview}>
 			<h3>Предпросмотр сообщения</h3>
 			<p>
@@ -240,6 +262,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 			<p>
 				<strong>Email:</strong> {email}
 			</p>
+			{/* Если есть домашняя страница, отображаем её как ссылку */}
 			{homepage && (
 				<p>
 					<strong>Домашняя страница:</strong>{" "}
@@ -249,23 +272,28 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 				</p>
 			)}
 			<p>
+				{/* Отображаем текст сообщения */}
 				<strong>Сообщение:</strong> {message}
 			</p>
+			{/* Если есть изображение, отображаем его имя */}
 			{image && (
 				<p>
 					<strong>Изображение:</strong> {image.name}
 				</p>
 			)}
+			{/* Если есть текстовый файл, отображаем его имя */}
 			{textFile && (
 				<p>
 					<strong>Текстовый файл:</strong> {textFile.name}
 				</p>
 			)}
+			{/* Если мы отвечаем на сообщение, отображаем текст цитаты */}
 			{replyingToMessage && (
 				<p>
 					<strong>Ответ на:</strong> {replyingToMessage.text}
 				</p>
 			)}
+			{/* Кнопка для закрытия окна предпросмотра */}
 			<button onClick={() => setShowPreview(false)}>
 				Закрыть предпросмотр
 			</button>
@@ -274,55 +302,63 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 
 	// функция для вставки HTML-тегов:
 	const insertTag = (tag) => {
-		const textarea = textareaRef.current;
-		const start = textarea.selectionStart;
-		const end = textarea.selectionEnd;
-		const text = textarea.value;
-		const before = text.substring(0, start);
-		const after = text.substring(end);
-		let insertion = "";
+		const textarea = textareaRef.current; // Ссылка на элемент textarea
+		const start = textarea.selectionStart; // Начальная позиция выделенного текста
+		const end = textarea.selectionEnd; // Конечная позиция выделенного текста
+		const text = textarea.value; // Текущий текст в textarea
+		const before = text.substring(0, start); // Текст перед выделением
+		const after = text.substring(end); // Текст после выделения
+		let insertion = ""; // Переменная для хранения вставляемого HTML-тега
 
+		// В зависимости от типа тега, создаем соответствующий HTML
 		switch (tag) {
 			case "i":
 			case "strong":
 			case "code":
-				insertion = `<${tag}>${text.substring(start, end)}</${tag}>`;
+				insertion = `<${tag}>${text.substring(start, end)}</${tag}>`; // Вставляем теги для выделенного текста
 				break;
 			case "a":
-				const url = prompt("Введите URL для ссылки:", "http://");
+				const url = prompt("Введите URL для ссылки:", "http://"); // Спрашиваем URL для тега <a>
 				if (url) {
-					insertion = `<a href="${url}">${text.substring(start, end)}</a>`;
+					insertion = `<a href="${url}">${text.substring(start, end)}</a>`; // Вставляем тег <a> с URL
 				}
 				break;
 		}
 
+		// Обновляем текст в textarea с вставленными тегами
 		setMessage(before + insertion + after);
-		textarea.focus();
+		textarea.focus(); // Устанавливаем фокус на textarea
 		textarea.setSelectionRange(
 			start + insertion.length,
 			start + insertion.length
-		);
+		); // Перемещаем курсор после вставленного текста
 	};
 
+	// Функция для выхода из чата
 	const handleLeave = () => {
-		const user = localStorage.getItem("user");
+		const user = localStorage.getItem("user"); // Получаем имя пользователя из локального хранилища
 		if (socket) {
-			socket.emit("logout", { user, socketID: socket.id });
+			socket.emit("logout", { user, socketID: socket.id }); // Отправляем событие выхода на сервер
 		}
-		localStorage.removeItem("user");
-		navigate("/");
+		localStorage.removeItem("user"); // Удаляем имя пользователя из локального хранилища
+		navigate("/"); // Перенаправляем пользователя на главную страницу
 	};
 
+	// Возврат элемента
 	return (
 		<div className={styles.messageBlock}>
+			{/* Заголовок с кнопкой для выхода из чата */}
 			<header className={styles.header}>
 				<button className={styles.btn} onClick={handleLeave}>
 					Покинуть чат
 				</button>
 			</header>
+
+			{/* Если отображается предпросмотр сообщения */}
 			{showPreview ? (
 				<Preview />
 			) : (
+				// Форма для отправки сообщения
 				<form className={styles.form} onSubmit={handleSend}>
 					{/* Поле ввода имени */}
 					<input
@@ -332,6 +368,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 						placeholder='Ваше имя (только латинские буквы)'
 						required
 					/>
+					{/* Отображение ошибки имени, если она есть */}
 					{errors.name && <span className={styles.error}>{errors.name}</span>}
 
 					{/* Поле ввода email */}
@@ -342,6 +379,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 						placeholder='Ваш email'
 						required
 					/>
+					{/* Отображение ошибки email, если она есть */}
 					{errors.email && <span className={styles.error}>{errors.email}</span>}
 
 					{/* Поле ввода домашней страницы */}
@@ -351,10 +389,12 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 						onChange={(e) => setHomepage(e.target.value)}
 						placeholder='Ваша домашняя страница (необязательно)'
 					/>
+					{/* Отображение ошибки домашней страницы, если она есть */}
 					{errors.homepage && (
 						<span className={styles.error}>{errors.homepage}</span>
 					)}
 
+					{/* Панель инструментов для вставки HTML-тегов */}
 					<div className={styles.htmlToolbar}>
 						<button type='button' onClick={() => insertTag("i")}>
 							[i]
@@ -370,7 +410,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 						</button>
 					</div>
 
-					{/* Поле для сообщения */}
+					{/* Поле для ввода сообщения */}
 					<textarea
 						className={`${styles.input} ${styles.messageTextarea}`}
 						ref={textareaRef}
@@ -384,6 +424,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 						}
 						required
 					/>
+					{/* Отображение ошибки сообщения, если она есть */}
 					{errors.message && (
 						<span className={styles.error}>{errors.message}</span>
 					)}
@@ -393,6 +434,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 						<strong>Загрузить картинку:</strong>
 					</label>
 					<input type='file' onChange={handleImageChange} accept='image/*' />
+					{/* Отображение ошибки загрузки изображения, если она есть */}
 					{fileErrors.image && (
 						<span className={styles.error}>{fileErrors.image}</span>
 					)}
@@ -402,6 +444,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 						<strong>Загрузить текстовый файл:</strong>
 					</label>
 					<input type='file' onChange={handleFileChange} accept='.txt' />
+					{/* Отображение ошибки загрузки текстового файла, если она есть */}
 					{fileErrors.textFile && (
 						<span className={styles.error}>{fileErrors.textFile}</span>
 					)}
@@ -421,20 +464,22 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 						placeholder='Введите CAPTCHA'
 						required
 					/>
-
 					{/* Сообщение об ошибке CAPTCHA */}
 					{captchaError && <span className={styles.error}>{captchaError}</span>}
 
+					{/* Кнопка для отправки сообщения */}
 					<button type='submit'>
 						{replyingToMessage ? "Ответить" : "Отправить"}
 					</button>
+
+					{/* Кнопка для отмены ответа на сообщение */}
 					{replyingToMessage && (
 						<button type='button' onClick={cancelReply}>
 							Отменить ответ
 						</button>
 					)}
 
-					{/* Новая кнопка для предпросмотра */}
+					{/* Кнопка для предпросмотра сообщения */}
 					<button type='button' onClick={handlePreview}>
 						Предпросмотр сообщения
 					</button>
