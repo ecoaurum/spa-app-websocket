@@ -40,6 +40,7 @@ git clone https://github.com/ecoaurum/spa-app-websocket.git
 
 - Перейдите в папку server и установите все зависимости:
 	cd server
+
 	npm install
 - Затем запустите сервер разработки ( Сервер будет запущен по адресу, который указан в настройках хостинга):
 	npm start
