@@ -20,5 +20,5 @@ RUN npm run build
 # Открываем стандартный HTTP порт
 EXPOSE 80
 
-# Запускаем сервер 
+# Запускаем приложение 
 CMD ["npm", "run", "preview"]
