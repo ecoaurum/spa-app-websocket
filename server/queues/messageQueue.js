@@ -7,7 +7,7 @@ const messageQueue = new Queue("messageQueue", {
 	redis: {
 		host: process.env.REDISHOST || "127.0.0.1", // Указываем хост для Redis
 		port: process.env.REDISPORT || 6379, // Указываем порт для Redis
-		password: process.env.REDISPASSWORD,
+		// password: process.env.REDISPASSWORD,
 	},
 });
 

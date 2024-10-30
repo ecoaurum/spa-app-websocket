@@ -13,7 +13,7 @@ router.get("/status", async (req, res) => {
 				// Возвращаем информацию о Redis
 				host: process.env.REDISHOST,
 				port: process.env.REDISPORT,
-				password: process.env.REDISPASSWORD,
+				// password: process.env.REDISPASSWORD,
 			},
 		});
 	} catch (error) {

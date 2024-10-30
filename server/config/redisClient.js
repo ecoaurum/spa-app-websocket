@@ -7,7 +7,7 @@ const redisClient = new Redis({
 	host: process.env.REDISHOST,
 	// Указываем порт для Redis из переменной окружения, по умолчанию 6379
 	port: process.env.REDISPORT,
-	password: process.env.REDISPASSWORD,
+	// password: process.env.REDISPASSWORD,
 });
 
 // Устанавливаем обработчик события ошибки, чтобы вывести сообщение в консоль
