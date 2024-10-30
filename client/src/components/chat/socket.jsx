@@ -7,7 +7,7 @@
 import io from "socket.io-client";
 
 // Создаем экземпляр сокета, подключаемся к серверу по указанному URL
-const socket = io("https://spa-app-websocket-server.up.railway.app/", {
+const socket = io(import.meta.env.VITE_API_URL, {
 	withCredentials: true, // Передаем куки вместе с запросами для обеспечения аутентификации
 	transports: ["websocket", "polling"], // Указываем используемые транспортные методы
 });

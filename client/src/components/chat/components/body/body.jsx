@@ -1,4 +1,6 @@
-// Этот компонент отвечает за отображение сообщений, управление их сортировкой, ответами на сообщения и отображением контента. Он также включает функциональность пагинации и модальное окно для просмотра изображений.
+// Этот компонент отвечает за отображение сообщений, управление их сортировкой,
+// ответами на сообщения и отображением контента.
+//Он также включает функциональность пагинации и модальное окно для просмотра изображений.
 //==================================================
 
 import React, { useEffect, useState } from "react"; // Импорт хуков для управления состоянием и эффектами
@@ -24,10 +26,27 @@ const Body = ({
 		direction: "desc", // Направление сортировки (по умолчанию - по убыванию)
 	});
 
+	// Проверка структуры данных сообщений после обновлений
+	useEffect(() => {
+		console.log("Messages after socket update:", messages); // Проверка структуры
+	}, [messages]);
+
 	// Функция для обработки ответа на сообщение
-	const handleReply = (messageId, text) => {
+	const handleReply = (messageId, username, messageText) => {
 		setReplyingTo(messageId); // Устанавливаем ID сообщения, на которое отвечаем
-		setReplyTo({ id: messageId, text: text }); // Сохраняем данные для ответа
+		setReplyTo({
+			id: messageId,
+			text: messageText,
+			username: username,
+		}); // Сохраняем данные для ответа
+
+		// Добавим вывод в консоль для отладки
+		console.log("Reply data set:", {
+			id: messageId,
+			text: messageText,
+			username: username,
+		});
+
 		const messageInput = document.querySelector(".userMessage"); // Находим поле для ввода сообщения
 		if (messageInput) {
 			messageInput.scrollIntoView({ behavior: "smooth" }); // Прокручиваем к полю ввода
@@ -176,10 +195,16 @@ const Body = ({
 			// Генерируем цвет для сообщения на основе имени пользователя
 			const backgroundColor = generateColor(element.name);
 
+			console.log("Rendering unique message:", element.id, element.text);
+			// Уникальный ключ, учитывающий уровень вложенности
+			const uniqueKey = `${element.id}-${depth}`;
+
+			console.log("Отображение сообщения:", element); // Лог для отладки
+
 			return (
 				// Создаем контейнер для сообщения, используя идентификатор сообщения в качестве ключа
 				// и отступ для вложенных сообщений на основе уровня вложенности (depth)
-				<div key={element.id} style={{ marginLeft: `${depth * 20}px` }}>
+				<div key={uniqueKey} style={{ marginLeft: `${depth * 20}px` }}>
 					<div className={styles.chats}>
 						<div className={styles.messageHeader}>
 							{/* Отображаем имя отправителя сообщения */}
@@ -204,6 +229,8 @@ const Body = ({
 							{/* Если есть цитата, отображаем её */}
 							{element.quotetext && (
 								<div className={styles.quote}>
+									{/* {console.log("Рендеринг цитаты текста:", element.quotetext)}{" "} */}
+									{/* Логирование quotetextReplies found */}
 									<p>{truncateQuote(element.quotetext)}</p>
 								</div>
 							)}
@@ -214,13 +241,13 @@ const Body = ({
 							{element.imageUrl && (
 								<div className={styles.mediaContainer}>
 									<img
-										src={`https://spa-app-websocket-server.up.railway.app${element.imageUrl}`}
+										src={`${import.meta.env.VITE_API_URL}${element.imageUrl}`}
 										alt='User upload'
 										className={styles.messageImage}
 										// Увеличение картинки при клике
 										onClick={() =>
 											handleImageClick(
-												`https://spa-app-websocket-server.up.railway.app${element.imageUrl}`
+												`${import.meta.env.VITE_API_URL}${element.imageUrl}`
 											)
 										}
 									/>
@@ -232,7 +259,9 @@ const Body = ({
 							{element.textFileUrl && (
 								<div className={styles.mediaContainer}>
 									<a
-										href={`https://spa-app-websocket-server.up.railway.app${element.textFileUrl}`}
+										href={`${import.meta.env.VITE_API_URL}${
+											element.textFileUrl
+										}`}
 										target='_blank'
 										rel='noopener noreferrer'
 										className={styles.textFileLink}
@@ -258,6 +287,7 @@ const Body = ({
 						)}
 					</div>
 					{/* Если у сообщения есть вложенные ответы, рекурсивно рендерим их */}
+					{/* Проверка и рекурсивный рендер вложенных ответов */}
 					{element.replies &&
 						element.replies.length > 0 &&
 						renderMessages(element.replies, depth + 1)}
@@ -271,6 +301,7 @@ const Body = ({
 		<>
 			<div className={styles.container}>
 				{renderMainComments()} {/* Отображаем заголовки таблицы */}
+				{console.log("Rendering Body component with messages:", messages)}
 				{renderMessages(messages)} {/* Отображаем все сообщения */}
 				<div className={styles.status}>
 					<p>{status}</p> {/* Отображаем статус соединения */}
@@ -279,16 +310,19 @@ const Body = ({
 			{/* Пагинация, если страниц больше одной */}
 			{totalPages > 1 && (
 				<Pagination
-					currentPage={currentPage}
-					totalPages={totalPages}
-					onPageChange={loadMoreMessages}
+					currentPage={currentPage} // Текущая страница
+					totalPages={totalPages} // Общее количество страниц
+					onPageChange={loadMoreMessages} // Функция для загрузки дополнительных сообщений
 				/>
 			)}
 			{/* Модальное окно для отображения увеличенного изображения */}
 			{imageModal && (
 				<div className={styles.modal} onClick={closeModal}>
+					{" "}
+					{/* Закрытие модального окна при клике на него */}
 					<div className={styles.modalContent}>
-						<img src={imageModal} alt='Enlarged' />
+						<img src={imageModal} alt='Enlarged' />{" "}
+						{/* Отображение увеличенного изображения */}
 					</div>
 				</div>
 			)}

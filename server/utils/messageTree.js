@@ -1,5 +1,6 @@
 // Функция для построения дерева сообщений (с учётом родительских сообщений и ответов)
 function buildMessageTree(messages) {
+	// console.log("Messages before building tree:", messages);
 	const messageMap = new Map(); // Карта для хранения сообщений по ID
 	const roots = []; // Массив для корневых сообщений (тех, у которых нет родителя)
 
@@ -17,13 +18,18 @@ function buildMessageTree(messages) {
 			if (parent) {
 				parent.replies.push(msg); // Добавляем сообщение как ответ на родительское
 			} else {
-				roots.push(msg); // Если родитель не найден, добавляем сообщение как корневое
+				// roots.push(msg); // Если родитель не найден, добавляем сообщение как корневое
+				console.warn(
+					`Не найден родитель с id ${msg.parentid} для сообщения`,
+					msg
+				);
 			}
 		} else {
 			roots.push(msg); // Если у сообщения нет родителя, добавляем его как корневое
 		}
 	});
 
+	// console.log("Сформированное дерево сообщений:", roots);
 	return roots; // Возвращаем корневые сообщения с вложенными ответами
 }
 

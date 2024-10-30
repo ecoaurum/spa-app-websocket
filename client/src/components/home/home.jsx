@@ -1,32 +1,38 @@
 import React from "react";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./styles.module.css";
 
-const Home = ({ socket }) => {
-	const navigate = useNavigate();
-	const [user, setUser] = useState("");
+// Компонент главной страницы
+const Home = () => {
+	const navigate = useNavigate(); // Создаем экземпляр навигатора для перехода между страницами
 
-	const handleSubmit = (e) => {
-		e.preventDefault();
-		localStorage.setItem("user", user);
-		socket.emit("newUser", { user, socketID: socket.id });
-		navigate("/chat");
+	// Функция для обработки нажатия на кнопку "Вход"
+	const handleLogin = () => {
+		navigate("/login");
 	};
+
+	// Функция для обработки нажатия на кнопку "Регистрация"
+	const handleRegister = () => {
+		navigate("/register");
+	};
+
+	// Возвращаем JSX-код для отображения главной страницы
 	return (
-		<form onSubmit={handleSubmit} className={styles.container}>
-			<h2>Вход в чат</h2>
-			{/* <label htmlFor="user"></label>
-            <input 
-                type="text" 
-                id="user" 
-                value={user} 
-                onChange={(e) => setUser(e.target.value)}
-                className={styles.userInput}/> */}
-			<button type='submit' className={styles.homeBtn}>
-				Войти
-			</button>
-		</form>
+		<div className={styles.container}>
+			<h2>Добро пожаловать в чат</h2>
+			<div className={styles.buttons}>
+				<button onClick={handleLogin} className={styles.homeBtn}>
+					{" "}
+					{/* Кнопка для входа */}
+					Вход
+				</button>
+				<button onClick={handleRegister} className={styles.homeBtn}>
+					{" "}
+					{/* Кнопка для регистрации */}
+					Регистрация
+				</button>
+			</div>
+		</div>
 	);
 };
 export default Home;

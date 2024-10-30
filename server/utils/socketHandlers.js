@@ -7,6 +7,8 @@ const {
 	getTotalPages,
 } = require("../controllers/messageController");
 
+const messageQueue = require("../queues/messageQueue");
+
 let users = []; // Массив для хранения пользователей, подключенных через WebSocket
 
 // Функция для проверки длины сообщения
@@ -41,35 +43,63 @@ module.exports = (io) => {
 		});
 
 		// Событие для отправки нового сообщения
-		socket.on("message", async (data) => {
-			const { name, email, text } = data;
-
-			// Проверка валидности данных
-			if (!name || !email || !validateMessageLength(text)) {
-				return socket.emit("error", { message: "Fill in all required fields" }); // Проверяем обязательные поля
-			}
-
-			// Валидация капчи
-			if (!validateCaptcha(socket.handshake.address, data.captcha)) {
-				return socket.emit("error", { message: "Invalid CAPTCHA" }); // Ошибка при неверной капче
-			}
-
-			// Валидация email
-			if (!validateEmail(email)) {
-				return socket.emit("error", { message: "Invalid email format" }); // Ошибка при некорректном email
-			}
-
-			// Валидация URL, если он указан
-			if (data.homepage && !validateUrl(data.homepage)) {
-				return socket.emit("error", { message: "Invalid URL format" }); // Ошибка при некорректном URL
-			}
-
+		socket.on("message", async (messageData) => {
 			try {
-				const newMessage = await createMessage(data); // Создание нового сообщения
-				io.emit("newMessage", { newMessage }); // Отправка нового сообщения всем клиентам
+				if (!messageData) {
+					throw new Error("Данные сообщения отсутствуют");
+				}
+				const { name, email, text } = messageData;
+
+				// Проверка валидности данных
+				if (!name || !email || !validateMessageLength(text)) {
+					return socket.emit("error", {
+						message: "Заполните все обязательные поля",
+					}); // Проверяем обязательные поля
+				}
+
+				// Валидация капчи
+				if (!validateCaptcha(socket.handshake.address, messageData.captcha)) {
+					return socket.emit("error", { message: "Неверная CAPTCHA" }); // Ошибка при неверной капче
+				}
+
+				// Валидация email
+				if (!validateEmail(email)) {
+					return socket.emit("error", {
+						message: "Неверный формат электронной почты",
+					}); // Ошибка при некорректном email
+				}
+
+				// Валидация URL, если он указан
+				if (messageData.homepage && !validateUrl(messageData.homepage)) {
+					return socket.emit("error", { message: "Неверный формат URL" }); // Ошибка при некорректном URL
+				}
+
+				// Добавляем сообщение в очередь для обработки
+				const job = await messageQueue.add(messageData, {
+					attempts: 3, // Количество попыток при ошибке
+					backoff: {
+						type: "exponential", // Режим повторного выполнения с экспоненциальной задержкой
+						delay: 2000,
+					},
+				});
+
+				// Ждем завершения задачи
+				const result = await job.finished();
+
+				// Логируем успешное завершение задачи
+				console.log(
+					`Сообщение успешно обработано с идентификатором: ${result.id}`
+				);
+				console.log("Данные результата:", result);
+
+				// Отправляем обновление всем клиентам
+				io.emit("newMessage", { newMessage: result });
 
 				// Обновление первой страницы сообщений
 				const updatedFirstPage = await getMessagesPage(1);
+
+				console.log("Updated first page messages:", updatedFirstPage);
+
 				// Отправляем обновленную страницу сообщений
 				io.emit("messagesPage", {
 					messages: updatedFirstPage, // Сообщения на первой странице
@@ -85,6 +115,7 @@ module.exports = (io) => {
 		// Событие для получения сообщений по странице
 		socket.on("getMessages", async (page) => {
 			const messagesPage = await getMessagesPage(page); // Получение сообщений для указанной страницы
+			// console.log("Sending messagesPage data:", messagesPage);
 			// Отправляем страницу сообщений клиенту
 			socket.emit("messagesPage", {
 				messages: messagesPage, // Сообщения для текущей страницы

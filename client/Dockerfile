@@ -4,7 +4,6 @@ FROM node:20.17.0-alpine
 # Рабочая директория
 WORKDIR /app
 
-
 # Копируем package.json и package-lock.json
 COPY package*.json ./
 

@@ -80,6 +80,16 @@ router.get("/main-comments", async (req, res) => {
 	}
 });
 
+// Маршрут для проверки состояния очереди в Redis
+router.get("/queue-status", async (req, res) => {
+	try {
+		const status = await messageQueue.getQueueStatus(); // Получаем статус очереди
+		res.json(status); // Отправляем ответ с данными о состоянии очереди
+	} catch (error) {
+		res.status(500).json({ error: error.message }); // Ответ на ошибку при получении статуса
+	}
+});
+
 // Маршрут для добавления нового сообщения
 router.post("/messages", async (req, res) => {
 	const {
@@ -87,7 +97,7 @@ router.post("/messages", async (req, res) => {
 		email,
 		homepage,
 		text,
-		parentId,
+		parentid,
 		quotetext,
 		imageUrl,
 		textFileUrl,
@@ -100,7 +110,7 @@ router.post("/messages", async (req, res) => {
 			email,
 			homepage,
 			text,
-			parentId,
+			parentid,
 			quotetext,
 			imageUrl,
 			textFileUrl,

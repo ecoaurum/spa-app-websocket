@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import Body from "./components/body/body";
 import MessageBlock from "./components/message-block/message-block";
 import styles from "./styles.module.css";
+// import "dotenv/config";
 
 // Компонент для отображения страницы чата принимающий сокет в качестве props
 const ChatPage = ({ socket }) => {
@@ -15,48 +16,75 @@ const ChatPage = ({ socket }) => {
 	const [currentPage, setCurrentPage] = useState(1); // Состояние для текущей страницы пагинации
 	const [totalPages, setTotalPages] = useState(1); // Состояние для общего количества страниц
 
-	// useEffect для обработки событий socket
+	// Основной useEffect для обработки событий сокета
 	useEffect(() => {
-		// Обработчик события "response" от сервера
-		socket.on("response", (data) => {
-			// Обновляем состояние сообщений с учетом ответа (вложенного сообщения)
+		// Функция для обработки события "messagesPage" от сервера
+		const handleMessagesPage = (data) => {
+			console.log("Получены данные страницы сообщений:", data);
+			if (data && data.messages) {
+				// Обновляем состояние сообщений, добавляя только уникальные
+				setMessages((prevMessages) => {
+					const uniqueMessages = data.messages.filter(
+						(msg) => !prevMessages.some((prevMsg) => prevMsg.id === msg.id)
+					);
+
+					return [...prevMessages, ...uniqueMessages]; // Объединяем старые и новые сообщения
+				});
+			}
+			setTotalPages(data.totalPages || 1); // Устанавливаем общее количество страниц
+			setCurrentPage(data.currentPage || 1); // Устанавливаем текущую страницу
+		};
+
+		// Функция для обработки события "response" от сервера
+		const handleResponse = (data) => {
+			console.log("Ответ с сервера:", data);
 			setMessages((prevMessages) => {
-				if (data.parentId) {
-					return updateMessagesWithReply(prevMessages, data); // Если есть parentId, обновляем сообщения с учетом ответа
+				if (data.parentid) {
+					// Если есть родительское сообщение, обновляем его с новым ответом
+					return updateMessagesWithReply(prevMessages, data);
 				} else {
-					return [...prevMessages, data]; // Иначе добавляем новое сообщение в конец
+					// Если сообщение новое, добавляем его в массив сообщений
+					return prevMessages.some((msg) => msg.id === data.id)
+						? prevMessages
+						: [...prevMessages, data];
 				}
 			});
-		});
+		};
 
-		// Отправляем запрос на получение сообщений с первой страницы
+		// Функция для обработки события "newMessage" от сервера
+		const handleNewMessage = (data) => {
+			if (data.newMessage) {
+				setMessages((prevMessages) => {
+					const isNew = !prevMessages.some(
+						(msg) => msg.id === data.newMessage.id
+					);
+					if (isNew) {
+						if (data.newMessage.parentid) {
+							// Если новое сообщение является ответом, обновляем его
+							return updateMessagesWithReply(prevMessages, data.newMessage);
+						} else {
+							// Иначе просто добавляем новое сообщение
+							return [...prevMessages, data.newMessage];
+						}
+					}
+					return prevMessages; // Если сообщение уже существует, возвращаем предыдущее состояние
+				});
+			}
+		};
+
+		// Установка подписок на события сокета
+		socket.on("messagesPage", handleMessagesPage);
+		socket.on("response", handleResponse);
+		socket.on("newMessage", handleNewMessage);
+
+		// Запрашиваем сообщения первой страницы при подключении
 		socket.emit("getMessages", 1);
 
-		// Обработчик события "messagesPage" от сервера
-		socket.on("messagesPage", (data) => {
-			// Обновляем состояние сообщений
-			setMessages(data.messages); // Устанавливаем сообщения
-			setTotalPages(data.totalPages); // Устанавливаем общее количество страниц
-			setCurrentPage(data.currentPage); // Устанавливаем текущую страницу
-		});
-
-		// Обработка события получения нового сообщения от сервера
-		socket.on("newMessage", (data) => {
-			// Обновляем состояние сообщений с учетом нового сообщения
-			setMessages((prevMessages) => {
-				if (data.newMessage.parentId) {
-					return updateMessagesWithReply(prevMessages, data.newMessage); // Если есть parentId, обновляем сообщения с учетом ответа
-				} else {
-					return [...prevMessages, data.newMessage]; // Иначе добавляем новое сообщение в конец
-				}
-			});
-		});
-
-		// Функция очистки обработчиков событий при демонтировании компонента
+		// Очистка подписок на события при размонтировании
 		return () => {
-			socket.off("messagesPage");
-			socket.off("response");
-			socket.off("newMessage");
+			socket.off("messagesPage", handleMessagesPage);
+			socket.off("response", handleResponse);
+			socket.off("newMessage", handleNewMessage);
 		};
 	}, [socket]);
 
@@ -69,9 +97,19 @@ const ChatPage = ({ socket }) => {
 	const updateMessagesWithReply = (messages, newReply) => {
 		return messages.map((msg) => {
 			// Проверяем, является ли текущее сообщение родительским для ответа
-			if (msg.id === newReply.parentId) {
-				// Если находим родительское сообщение, добавляем к нему новый ответ
-				return { ...msg, replies: [...(msg.replies || []), newReply] };
+			if (msg.id === newReply.parentid) {
+				const existingReplies = msg.replies || []; // Получаем существующие ответы
+
+				// Проверяем, есть ли новый ответ уже в replies по его `id`
+				const isReplyExists = existingReplies.some(
+					(reply) => reply.id === newReply.id
+				);
+
+				if (!isReplyExists) {
+					// Если ответ еще не существует, добавляем его в массив ответов
+					return { ...msg, replies: [...existingReplies, newReply] };
+				}
+				return msg; // Возвращаем сообщение без изменений, если ответ уже существует
 			}
 			// Если текущее сообщение имеет вложенные ответы, рекурсивно вызываем функцию для них
 			if (msg.replies) {
@@ -80,7 +118,7 @@ const ChatPage = ({ socket }) => {
 					replies: updateMessagesWithReply(msg.replies, newReply), // Рекурсивно обновляем ответы
 				};
 			}
-			return msg;
+			return msg; // Возвращаем сообщение без изменений, если оно не требует обновления
 		});
 	};
 
@@ -88,20 +126,25 @@ const ChatPage = ({ socket }) => {
 	const fetchSortedComments = async (sort, order) => {
 		try {
 			const response = await fetch(
-				`https://spa-app-websocket-server.up.railway.app/api/main-comments?sort=${sort}&order=${order}`
+				`${
+					import.meta.env.VITE_API_URL
+				}/api/main-comments?sort=${sort}&order=${order}`
 			);
 			if (!response.ok) {
-				throw new Error("Network response was not ok");
+				throw new Error("Network response was not ok"); // Обработка ошибок сети
 			}
-			const data = await response.json();
+			const data = await response.json(); // Получаем данные в формате JSON
 			setMessages(data); // Устанавливаем отсортированные сообщения
 		} catch (error) {
 			console.error("Failed to fetch sorted comments:", error); // Логируем ошибки
 		}
 	};
 
+	// Возвращаем JSX-код для отображения страницы чата
 	return (
 		<div className={styles.chat}>
+			{" "}
+			{/* Обертка для чата */}
 			<main className={styles.main}>
 				{/* Компонент MessageBlock для ввода сообщения */}
 				<MessageBlock
@@ -113,7 +156,7 @@ const ChatPage = ({ socket }) => {
 				{/* Компонент Body для отображения сообщений и управления ими */}
 				<Body
 					messages={messages} // Передаем массив сообщений
-					status={status}
+					status={status} // Передаем статус чата
 					socket={socket} // Передаем сокет для взаимодействия в реальном времени
 					setReplyTo={setReplyTo} // Функция для установки состояния ответа
 					currentPage={currentPage} // Передаем текущую страницу

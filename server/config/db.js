@@ -1,40 +1,32 @@
-// Импорт модуля mysql2 для работы с MySQL
-const mysql = require("mysql2/promise");
+// Импортируем Sequelize
+const { Sequelize } = require("sequelize");
 require("dotenv").config(); // Подключение переменных окружения из .env файла
 
-// Подключение к базе данных MySQL
-const db = mysql.createPool({
-	host: process.env.MYSQLHOST || "mysql", // Хост базы данных
-	user: process.env.MYSQLUSER, // Имя пользователя базы данных
-	password: process.env.MYSQLPASSWORD, // Пароль для подключения к базе данных
-	database: process.env.MYSQLDATABASE, // Имя базы данных
-	port: process.env.MYSQLPORT || 3306, // Порт для подключения к базе данных (по умолчанию 3306)
-});
+// Создаем подключение к базе данных через Sequelize
+const sequelize = new Sequelize(
+	process.env.MYSQLDATABASE, // Имя базы данных
+	process.env.MYSQLUSER, // Пользователь базы данных
+	process.env.MYSQLPASSWORD, // Пароль базы данных
+	{
+		// Конфигурация подключения к базе данных
+		host: process.env.MYSQLHOST || "mysql", // Хост базы данных
+		port: process.env.MYSQLPORT || 3306, // Порт базы данных
+		dialect: "mysql", // Диалект базы данных
+		timezone: "+03:00", // Часовой пояс для корректного времени в базе данных
+		logging: false, // Отключаем SQL-запросы в консоли
+	}
+);
 
-// Функция для проверки и создания таблицы сообщений, если она не существует
+// Проверка подключения к базе данных
 const connectDB = async () => {
 	try {
-		const connection = await db.getConnection(); // Создание соединения с базой данных
-		// SQL-запрос для создания таблицы
-		await connection.query(`
-      CREATE TABLE IF NOT EXISTS messages (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        email VARCHAR(255) NOT NULL,
-        homepage VARCHAR(255),
-        text TEXT NOT NULL,
-        parentid INT,
-        quotetext TEXT,
-        imageUrl VARCHAR(255),
-        textFileUrl VARCHAR(255),
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-		console.log("Database connected and table created if not exists"); // Логирование успешного подключения к базе данных и создания таблицы
-		connection.release(); // Освобождение соединения
-	} catch (err) {
-		console.error("Error connecting to database:", err); // Лог ошибки подключения
+		// Установка подключения к базе данных
+		await sequelize.authenticate(); // Проверка подключения с помощью метода `authenticate`
+		await sequelize.sync({ alter: true }); // Синхронизация моделей с базой данных
+		console.log("Соединение с базой данных установлено успешно.");
+	} catch (error) {
+		console.error("Ошибка подключения к базе данных:", error);
 	}
 };
 
-module.exports = { db, connectDB };
+module.exports = { sequelize, connectDB };

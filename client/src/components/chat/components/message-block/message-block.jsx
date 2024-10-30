@@ -44,7 +44,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 	const fetchCaptcha = async () => {
 		try {
 			const response = await fetch(
-				"https://spa-app-websocket-server.up.railway.app/api/captcha"
+				`${import.meta.env.VITE_API_URL}/api/captcha`
 			);
 			if (response.ok) {
 				const captchaSvgText = await response.text();
@@ -107,7 +107,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					formData.append("image", image); // Добавляем изображение в FormData
 					// Отправляем запрос на загрузку изображения
 					const response = await fetch(
-						"https://spa-app-websocket-server.up.railway.app/api/upload-image",
+						`${import.meta.env.VITE_API_URL}/api/upload-image`,
 						{
 							method: "POST",
 							body: formData,
@@ -129,7 +129,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					formData.append("file", textFile); // Добавляем текстовый файл в FormData
 					// Отправляем запрос на загрузку текстового файла
 					const response = await fetch(
-						"https://spa-app-websocket-server.up.railway.app/api/upload-file",
+						`${import.meta.env.VITE_API_URL}/api/upload-file`,
 						{
 							method: "POST",
 							body: formData,
@@ -143,9 +143,6 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 
 					const result = await response.json(); // Парсим ответ сервера
 					textFileUrl = result.fileUrl; // Сохраняем URL загруженного текстового файла
-
-					// Логируем URL для проверки
-					console.log("URL текстового файла!!!!:", textFileUrl);
 				}
 
 				// Отправка сообщения на сервер через socket
@@ -157,7 +154,7 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 					captcha,
 					imageUrl,
 					textFileUrl,
-					parentId: replyTo ? replyTo.id : null, // Если это ответ на другое сообщение, указываем его ID
+					parentid: replyTo ? replyTo.id : null, // Если это ответ на другое сообщение, указываем его ID
 					quotetext: replyTo ? replyTo.text : null, // Если это ответ на другое сообщение, включаем текст цитаты
 				});
 
@@ -167,6 +164,8 @@ const MessageBlock = ({ socket, replyTo, setReplyTo }) => {
 						// Если CAPTCHA неверна
 						setCaptchaError("Неверная CAPTCHA, попробуйте снова."); // Устанавливаем сообщение об ошибке
 						fetchCaptcha(); // Обновляем CAPTCHA
+					} else {
+						console.error("Ошибка от сервера:", data.message);
 					}
 				});
 

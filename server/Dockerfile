@@ -7,6 +7,9 @@ WORKDIR /app
 # Открываем порт для сервера
 EXPOSE 8080
 
+# Открываем порт для сервера
+# EXPOSE 5000
+
 # Копируем package.json и package-lock.json
 COPY package*.json ./
 
@@ -16,7 +19,7 @@ RUN npm install
 # Копируем все файлы сервера
 COPY . .
 
-# Запускаем приложение
+# Запускаем приложение в режиме разработки
 CMD [ "npm", "start" ]
 
 
