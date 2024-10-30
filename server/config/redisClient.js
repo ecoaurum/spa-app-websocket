@@ -13,7 +13,13 @@ require("dotenv").config(); // Загружаем переменные окру�
 // );
 
 // Подключение к Redis, используя REDIS_URL как приоритетный источник данных
-const redisClient = new Redis(process.env.REDIS_URL);
+const redisClient = new Redis(process.env.REDIS_URL, {
+	maxRetriesPerRequest: 3,
+	connectTimeout: 10000,
+	retryStrategy(times) {
+		return Math.min(times * 50, 2000);
+	},
+});
 
 // Устанавливаем обработчик события ошибки, чтобы вывести сообщение в консоль
 redisClient.on("error", (err) => {
