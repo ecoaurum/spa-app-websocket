@@ -29,7 +29,7 @@ services:
     networks:
       - app-network
     environment:
-      - VITE_API_URL=https://spa-app-websocket-server.up.railway.app/
+      - VITE_API_URL=https://spa-app-websocket-server.up.railway.app
 
   mysql:
     image: mysql:8.0
