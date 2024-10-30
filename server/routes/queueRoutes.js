@@ -9,11 +9,14 @@ router.get("/status", async (req, res) => {
 		res.json({
 			status: "success", // Указываем, что запрос выполнен успешно
 			data: status, // Возвращаем данные статуса очереди
+			// redis: {
+			// 	// Возвращаем информацию о Redis
+			// 	host: process.env.REDISHOST,
+			// 	port: process.env.REDISPORT,
+			// 	password: process.env.REDISPASSWORD,
+			// },
 			redis: {
-				// Возвращаем информацию о Redis
-				host: process.env.REDISHOST,
-				port: process.env.REDISPORT,
-				// password: process.env.REDISPASSWORD,
+				url: process.env.REDIS_URL,
 			},
 		});
 	} catch (error) {

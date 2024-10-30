@@ -3,11 +3,18 @@ const Message = require("../models/Message"); // Импортируем моде
 const { sanitizeMessage } = require("../middlewares/sanitize"); // Импортируем функцию sanitizeMessage для очистки текста сообщений
 
 // Создаем очередь сообщений с именем "messageQueue", подключая Redis
+// const messageQueue = new Queue("messageQueue", {
+// 	redis: {
+// 		host: process.env.REDISHOST || "127.0.0.1", // Указываем хост для Redis
+// 		port: process.env.REDISPORT || 6379, // Указываем порт для Redis
+// 		password: process.env.REDISPASSWORD,
+// 	},
+// });
+
+// Подключаем очередь сообщений через REDIS_URL
 const messageQueue = new Queue("messageQueue", {
 	redis: {
-		host: process.env.REDISHOST || "127.0.0.1", // Указываем хост для Redis
-		port: process.env.REDISPORT || 6379, // Указываем порт для Redis
-		// password: process.env.REDISPASSWORD,
+		url: process.env.REDIS_URL,
 	},
 });
 
