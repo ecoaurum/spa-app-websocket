@@ -28,9 +28,8 @@ services:
       - "80:80"
     networks:
       - app-network
-    # volumes:
-    #   - ./client:/app
-    #   - ./client/node_modules:/app/node_modules
+    environment:
+      - VITE_API_URL=https://spa-app-websocket-server.up.railway.app/
 
   mysql:
     image: mysql:8.0
