@@ -46,6 +46,7 @@ function App() {
 		const token = localStorage.getItem("token"); // Извлечение токена из localStorage
 		if (token) {
 			setAuthToken(token); // Установка токена, если он найден
+			setIsAuthenticated(true);
 		}
 		setIsLoading(false); // Установка состояния загрузки на false
 	}, []);
@@ -62,10 +63,26 @@ function App() {
 			<Route path='/' element={<Home socket={socket} />} />
 
 			{/* Маршрут для входа */}
-			<Route path='/login' element={<Login setAuthToken={setAuthToken} />} />
+			<Route
+				path='/login'
+				element={
+					<Login
+						setAuthToken={setAuthToken}
+						setIsAuthenticated={setIsAuthenticated}
+					/>
+				}
+			/>
 
 			{/* Маршрут для регистрации */}
-			<Route path='/register' element={<Register />} />
+			<Route
+				path='/register'
+				element={
+					<Register
+						setAuthToken={setAuthToken}
+						setIsAuthenticated={setIsAuthenticated}
+					/>
+				}
+			/>
 
 			{/* Маршрут для восстановления пароля */}
 			<Route path='/forgot-password' element={<ForgotPassword />} />
@@ -77,7 +94,7 @@ function App() {
 			<Route
 				path='/chat'
 				element={
-					<ProtectedRoute authToken={authToken}>
+					<ProtectedRoute isAuthenticated={isAuthenticated}>
 						<ChatPage socket={socket} />
 					</ProtectedRoute>
 				}

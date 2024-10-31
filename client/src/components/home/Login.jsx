@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./styles.module.css";
 
 // Компонент для страницы входа
-const Login = ({ setAuthToken }) => {
+const Login = ({ setAuthToken, setIsAuthenticated }) => {
 	// Создаем состояния для хранения email, пароля и ошибок
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -54,6 +54,7 @@ const Login = ({ setAuthToken }) => {
 		if (data.token) {
 			localStorage.setItem("token", data.token); // Сохраняем токен в localStorage
 			setAuthToken(data.token); // Обновляем состояние токена
+			setIsAuthenticated(true);
 			navigate("/chat"); // Переходим в чат
 		} else {
 			setError(data.error || "Ошибка входа");

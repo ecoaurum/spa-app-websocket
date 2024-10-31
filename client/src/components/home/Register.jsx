@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./styles.module.css";
 
 // Компонент для страницы регистрации
-const Register = () => {
+const Register = ({ setAuthToken, setIsAuthenticated }) => {
 	// Создаем состояния для хранения имени пользователя, email, пароля и ошибок
 	const [username, setUsername] = useState("");
 	const [email, setEmail] = useState("");
@@ -54,12 +54,13 @@ const Register = () => {
 		);
 
 		const data = await response.json(); // Получаем ответ от сервера
-		if (response.status !== 201) {
-			// Если статус не 201 (Created), отображаем ошибку
-			setError(data.errors ? data.errors[0].msg : data.error);
+		if (data.token) {
+			localStorage.setItem("token", data.token);
+			setAuthToken(data.token);
+			setIsAuthenticated(true);
+			navigate("/chat");
 		} else {
-			// Если регистрация прошла успешно, перенаправляем на страницу входа
-			navigate("/login");
+			setError(data.error || "Ошибка регистрации");
 		}
 	};
 
