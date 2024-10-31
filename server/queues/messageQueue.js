@@ -12,14 +12,10 @@ const { sanitizeMessage } = require("../middlewares/sanitize"); // Импорт�
 // });
 
 // Подключаем очередь сообщений через REDIS_URL
-// const messageQueue = new Queue("messageQueue", {
-// 	redis: process.env.REDIS_URL, // подключаем через URL Redis на Railway
-// 	maxRetriesPerRequest: 20, // настройка количества повторных попыток
-// 	enableReadyCheck: false, // отключаем проверку готовности
-// });
-
-const messageQueue = new Queue("messageQueue", process.env.REDIS_URL, {
-	redis: { tls: { rejectUnauthorized: false } },
+const messageQueue = new Queue("messageQueue", {
+	redis: process.env.REDIS_URL, // подключаем через URL Redis на Railway
+	maxRetriesPerRequest: 20, // настройка количества повторных попыток
+	enableReadyCheck: false, // отключаем проверку готовности
 });
 
 // Функция для проверки данных сообщения перед сохранением
