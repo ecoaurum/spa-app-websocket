@@ -195,7 +195,6 @@ const Body = ({
 			// Генерируем цвет для сообщения на основе имени пользователя
 			const backgroundColor = generateColor(element.name);
 
-			console.log("Rendering unique message:", element.id, element.text);
 			// Уникальный ключ, учитывающий уровень вложенности
 			const uniqueKey = `${element.id}-${depth}`;
 
@@ -301,7 +300,6 @@ const Body = ({
 		<>
 			<div className={styles.container}>
 				{renderMainComments()} {/* Отображаем заголовки таблицы */}
-				{console.log("Rendering Body component with messages:", messages)}
 				{renderMessages(messages)} {/* Отображаем все сообщения */}
 				<div className={styles.status}>
 					<p>{status}</p> {/* Отображаем статус соединения */}

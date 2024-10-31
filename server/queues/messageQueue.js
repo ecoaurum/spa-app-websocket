@@ -2,15 +2,6 @@ const Queue = require("bull"); // Импортируем библиотеку Bu
 const Message = require("../models/Message"); // Импортируем модель Message для сохранения сообщений в базе данных
 const { sanitizeMessage } = require("../middlewares/sanitize"); // Импортируем функцию sanitizeMessage для очистки текста сообщений
 
-// Создаем очередь сообщений с именем "messageQueue", подключая Redis
-// const messageQueue = new Queue("messageQueue", {
-// 	redis: {
-// 		host: process.env.REDISHOST || "127.0.0.1", // Указываем хост для Redis
-// 		port: process.env.REDISPORT || 6379, // Указываем порт для Redis
-// 		password: process.env.REDISPASSWORD,
-// 	},
-// });
-
 // Подключаем очередь сообщений через REDIS_URL
 const messageQueue = new Queue("messageQueue", {
 	redis: process.env.REDIS_URL, // подключаем через URL Redis на Railway
@@ -42,19 +33,11 @@ const validateMessageData = (data) => {
 // Логируем факт инициализации очереди
 console.log("Queue initialized with Redis");
 
-// Логируем информацию о подключении Redis
-console.log(
-	`Redis подключение: хост - ${process.env.REDISHOST}, порт - ${process.env.REDISPORT}`
-);
-
 // Определяем процесс обработки сообщений в очереди
 messageQueue.process(async (job) => {
 	try {
 		// Валидируем данные
 		const validatedData = validateMessageData(job.data);
-
-		// Логируем входящие данные
-		console.log("Полученные данные для обработки:", validatedData);
 
 		// Очищаем текст сообщения от потенциально опасного контента
 		const sanitizedText = sanitizeMessage(validatedData.text);

@@ -20,7 +20,7 @@ const ChatPage = ({ socket }) => {
 	useEffect(() => {
 		// Функция для обработки события "messagesPage" от сервера
 		const handleMessagesPage = (data) => {
-			console.log("Получены данные страницы сообщений:", data);
+			// console.log("Получены данные страницы сообщений:", data);
 			if (data && data.messages) {
 				// Обновляем состояние сообщений, добавляя только уникальные
 				setMessages((prevMessages) => {

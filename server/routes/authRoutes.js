@@ -46,7 +46,7 @@ router.post(
 	login // Обработчик маршрута для логина
 );
 
-// Роут отправки email на востановление
+// Роут отправки email на востановление пароля
 router.post(
 	"/forgot-password",
 	[
@@ -59,7 +59,7 @@ router.post(
 	forgotPassword // Обработчик маршрута для восстановления пароля
 );
 
-// Роут утановления нового пароля
+// Роут установления нового пароля
 router.post(
 	"/reset-password",
 	[
@@ -87,7 +87,7 @@ router.get(
 	"/google/callback",
 	passport.authenticate("google", {
 		failureRedirect: `${process.env.CLIENT_URL}/login`, // Перенаправление на страницу входа в систему при неудаче
-		session: true, // Использовать сеансы для аутентификации
+		session: true, // Использовать сеансы сессии для аутентификации
 	}),
 	(req, res) => {
 		// Проверка, аутентифицирован ли пользователь

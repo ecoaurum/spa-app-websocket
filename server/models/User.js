@@ -117,7 +117,7 @@ User.findByResetToken = async function (token) {
 	return await this.findOne({ where: { resetPasswordToken: token } });
 };
 
-// Метод для обновления пароля пользователя и сброса токена сброса
+// Метод для обновления пароля пользователя и сброса токена
 User.updatePassword = async function (email, newPassword) {
 	await this.update(
 		{
