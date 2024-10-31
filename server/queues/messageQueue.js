@@ -15,8 +15,6 @@ const { sanitizeMessage } = require("../middlewares/sanitize"); // Импорт�
 const messageQueue = new Queue("messageQueue", {
 	redis: {
 		url: process.env.REDIS_URL,
-		maxRetriesPerRequest: null,
-		enableReadyCheck: false,
 	},
 });
 
