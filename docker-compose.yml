@@ -20,6 +20,8 @@ services:
       - app-network
     volumes:
       - ./server/uploads:/app/uploads
+    environment:
+      - REDIS_URL=redis://default:vfVxehhNaOmWOsTlRNaEPPQyIDJuUWHp@redis.railway.internal:6379
 
   client:
     build: ./client
