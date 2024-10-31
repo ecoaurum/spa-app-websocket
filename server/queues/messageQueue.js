@@ -14,7 +14,7 @@ const { sanitizeMessage } = require("../middlewares/sanitize"); // Импорт�
 // Подключаем очередь сообщений через REDIS_URL
 const messageQueue = new Queue("messageQueue", {
 	redis: process.env.REDIS_URL, // подключаем через URL Redis на Railway
-	maxRetriesPerRequest: 20, // настройка количества повторных попыток
+	maxRetriesPerRequest: null, // настройка количества повторных попыток
 	enableReadyCheck: false, // отключаем проверку готовности
 });
 
