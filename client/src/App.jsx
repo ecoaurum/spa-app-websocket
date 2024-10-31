@@ -77,11 +77,9 @@ function App() {
 			<Route
 				path='/chat'
 				element={
-					isAuthenticated ? ( // Проверка isAuthenticated напрямую
-						<ChatPage socket={socket} /> // Если аутентифицирован, рендерим страницу чата
-					) : (
-						<Login /> // Перенаправление на страницу входа, если не выполнена аутентификация
-					)
+					<ProtectedRoute authToken={authToken}>
+						<ChatPage socket={socket} />
+					</ProtectedRoute>
 				}
 			/>
 		</Routes>

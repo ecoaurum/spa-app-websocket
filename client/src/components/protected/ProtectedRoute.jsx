@@ -2,12 +2,13 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 
 const ProtectedRoute = ({ authToken, children }) => {
-	if (!authToken) {
-		// Если токена нет, перенаправляем на страницу логина
-		return <Navigate to='/login' />;
-	}
+	// Проверка наличия токена в localStorage, если authToken отсутствует в props
+	const isAuthenticated = authToken || localStorage.getItem("token");
 
-	// Если токен есть, рендерим защищенный компонент
+	if (!isAuthenticated) {
+		// Если пользователь не авторизован, перенаправляем на страницу входа
+		return <Navigate to='/login' replace />;
+	}
 	return children;
 };
 
