@@ -12,10 +12,11 @@ const { sanitizeMessage } = require("../middlewares/sanitize"); // Импорт�
 // });
 
 // Подключаем очередь сообщений через REDIS_URL
-const messageQueue = new Queue("messageQueue", process.env.REDIS_URL, {
+const messageQueue = new Queue("messageQueue", {
 	redis: {
-		tls: true,
-		enableTLSForSentinelMode: false,
+		url: process.env.REDIS_URL,
+		maxRetriesPerRequest: null,
+		enableReadyCheck: false,
 	},
 });
 
